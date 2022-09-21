@@ -2,9 +2,14 @@ package provider
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"net/url"
+	"os"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	ch "github.com/leprosus/golang-clickhouse"
 )
 
 func init() {
@@ -26,11 +31,40 @@ func init() {
 func New(version string) func() *schema.Provider {
 	return func() *schema.Provider {
 		p := &schema.Provider{
+			Schema: map[string]*schema.Schema{
+				"username": &schema.Schema{
+					Type:     schema.TypeString,
+					Optional: true,
+					DefaultFunc: func() (any, error) {
+						return getEnvVar("TF_CLICKHOUSE_USERNAME")
+					},
+				},
+				"password": &schema.Schema{
+					Type:      schema.TypeString,
+					Optional:  true,
+					Sensitive: true,
+					DefaultFunc: func() (any, error) {
+						return getEnvVar("TF_CLICKHOUSE_PASSWORD")
+					},
+				},
+				"clickhouse_url": &schema.Schema{
+					Type:      schema.TypeString,
+					Required:  true,
+					Sensitive: true,
+					DefaultFunc: func() (any, error) {
+						return getEnvVar("TF_CLICKHOUSE_URL")
+					},
+				},
+				"port": &schema.Schema{
+					Type:     schema.TypeInt,
+					Required: true,
+				},
+			},
 			DataSourcesMap: map[string]*schema.Resource{
-				"scaffolding_data_source": dataSourceScaffolding(),
+				"dbs_data_source": dataSourceDbs(),
 			},
 			ResourcesMap: map[string]*schema.Resource{
-				"scaffolding_resource": resourceScaffolding(),
+				"db_resource": resourceDb(),
 			},
 		}
 
@@ -40,18 +74,32 @@ func New(version string) func() *schema.Provider {
 	}
 }
 
+func getEnvVar(envVarName string) (any, error) {
+	if v := os.Getenv(envVarName); v != "" {
+		return v, nil
+	}
+	return nil, errors.New(fmt.Sprintf("Env var %v not present", envVarName))
+
+}
+
 type apiClient struct {
-	// Add whatever fields, client or connection info, etc. here
-	// you would need to setup to communicate with the upstream
-	// API.
+	clickhouseConnection *ch.Conn
 }
 
 func configure(version string, p *schema.Provider) func(context.Context, *schema.ResourceData) (any, diag.Diagnostics) {
-	return func(context.Context, *schema.ResourceData) (any, diag.Diagnostics) {
-		// Setup a User-Agent for your API client (replace the provider name for yours):
-		// userAgent := p.UserAgent("terraform-provider-scaffolding", version)
-		// TODO: myClient.UserAgent = userAgent
+	return func(ctx context.Context, d *schema.ResourceData) (any, diag.Diagnostics) {
+		clickhouseUrl := d.Get("clickhouse_url").(string)
+		port := d.Get("port").(int)
+		username := d.Get("username").(string)
+		password := d.Get("password").(string)
+		clickhouseConnection := ch.New(clickhouseUrl, port, username, url.QueryEscape(password))
 
-		return &apiClient{}, nil
+		var diags diag.Diagnostics
+
+		if clickhouseUrl == "" {
+			return nil, diag.FromErr(fmt.Errorf("Error retrieving clickhouse uri"))
+		}
+
+		return &apiClient{clickhouseConnection: clickhouseConnection}, diags
 	}
 }
