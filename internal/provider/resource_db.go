@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -21,7 +22,7 @@ func resourceDb() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"cluster": &schema.Schema{
-				Description: "Cluster name",
+				Description: "Cluster name, not mandatory but should be provided if creating a db in a clustered server",
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
@@ -84,22 +85,35 @@ func resourceDbRead(ctx context.Context, d *schema.ResourceData, meta any) diag.
 	data_path, _ := result.String("data_path")
 	metadata_path, _ := result.String("metadata_path")
 	uuid, _ := result.String("uuid")
-	comment, _ := result.String("comment")
+
+	storedComment, _ := result.String("comment")
+	storedComment = strings.Replace(storedComment, "\\'", "'", -1)
+
+	byteStreamComment := []byte(storedComment)
+
+	var dat map[string]interface{}
+
+	if err := json.Unmarshal(byteStreamComment, &dat); err != nil {
+		return diag.FromErr(err)
+	}
+	comment := dat["comment"].(string)
+	cluster := dat["cluster"].(string)
+
 	newObject := fmt.Sprintf(
 		`{
-			"db_name":         "%v",
-			"engine":       "%v",
-			"data_path":     "%v",
-			"metadata_path": "%v",
-			"uuid":        "%v",
-			"comment":    "%v"}`, name, engine, data_path, metadata_path, uuid, comment)
+					"db_name":         "%v",
+					"engine":       "%v",
+					"data_path":     "%v",
+					"metadata_path": "%v",
+					"uuid":        "%v",
+					"comment":    "%v",
+					"cluster":    "%v"}`, name, engine, data_path, metadata_path, uuid, comment, cluster)
 	input := []byte(newObject)
 	var db map[string]string
 	err = json.Unmarshal(input, &db)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	println(name, data_path, engine, comment)
 
 	d.Set("db_name", name)
 	d.Set("engine", engine)
@@ -107,8 +121,9 @@ func resourceDbRead(ctx context.Context, d *schema.ResourceData, meta any) diag.
 	d.Set("metadata_path", metadata_path)
 	d.Set("uuid", uuid)
 	d.Set("comment", comment)
+	d.Set("cluster", cluster)
 
-	d.SetId(database_name)
+	d.SetId(cluster + ":" + database_name)
 
 	tflog.Trace(ctx, "DB resource created.")
 
@@ -124,20 +139,22 @@ func resourceDbCreate(ctx context.Context, d *schema.ResourceData, meta any) dia
 	database_name := d.Get("db_name").(string)
 	comment := d.Get("comment").(string)
 	cluster, _ := d.Get("cluster").(string)
-	if cluster != "" {
-		err := conn.Exec(fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %v ON CLUSTER %v COMMENT '%v'", database_name, cluster, comment))
 
-		if err != nil {
-			return diag.FromErr(err)
-		}
-	} else {
-		err := conn.Exec(fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %v COMMENT '%v'", database_name, comment))
-		if err != nil {
-			return diag.FromErr(err)
-		}
+	clusterStatement := ""
+	if cluster != "" {
+		clusterStatement = "ON CLUSTER " + cluster
+	}
+	storingComment := fmt.Sprintf(`{"comment":"%v","cluster":"%v"}`, comment, cluster)
+	storingComment = strings.Replace(storingComment, "'", "\\'", -1)
+
+	query := fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %v %v COMMENT '%v'", database_name, clusterStatement, storingComment)
+
+	err := conn.Exec(query)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
-	d.SetId(database_name)
+	d.SetId(cluster + ":" + database_name)
 
 	return diags
 }
@@ -150,16 +167,13 @@ func resourceDbDelete(ctx context.Context, d *schema.ResourceData, meta any) dia
 
 	database_name := d.Get("db_name").(string)
 	cluster, _ := d.Get("cluster").(string)
+	clusterStatement := ""
 	if cluster != "" {
-		err := conn.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %v ON CLUSTER %v SYNC", database_name, cluster))
-		if err != nil {
-			return diag.FromErr(err)
-		}
-	} else {
-		err := conn.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %v SYNC", database_name))
-		if err != nil {
-			return diag.FromErr(err)
-		}
+		clusterStatement = "ON CLUSTER " + cluster
+	}
+	err := conn.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %v %v SYNC", database_name, clusterStatement))
+	if err != nil {
+		return diag.FromErr(err)
 	}
 	d.SetId("")
 	return diags
