@@ -22,7 +22,7 @@ resource "clickhouse_db" "test_db" {
 // Should provide cluster name in case of using this into a clickhouse cluster
 // see: https://github.com/Altinity/clickhouse-operator/blob/master/docs/replication_setup.md
 resource "clickhouse_db" "test_db_clusterd" {
-  db_name = "database_test_clustered_ojete"
+  db_name = "database_test_clustered_2"
   comment = "This is a test database"
   cluster = "'{cluster}'"
 }

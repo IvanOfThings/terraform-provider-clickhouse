@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -87,17 +86,10 @@ func resourceDbRead(ctx context.Context, d *schema.ResourceData, meta any) diag.
 	uuid, _ := result.String("uuid")
 
 	storedComment, _ := result.String("comment")
-	storedComment = strings.Replace(storedComment, "\\'", "'", -1)
-
-	byteStreamComment := []byte(storedComment)
-
-	var dat map[string]interface{}
-
-	if err := json.Unmarshal(byteStreamComment, &dat); err != nil {
+	comment, cluster, err := unmarshalComment(storedComment)
+	if err != nil {
 		return diag.FromErr(err)
 	}
-	comment := dat["comment"].(string)
-	cluster := dat["cluster"].(string)
 
 	newObject := fmt.Sprintf(
 		`{
@@ -144,10 +136,7 @@ func resourceDbCreate(ctx context.Context, d *schema.ResourceData, meta any) dia
 	if cluster != "" {
 		clusterStatement = "ON CLUSTER " + cluster
 	}
-	storingComment := fmt.Sprintf(`{"comment":"%v","cluster":"%v"}`, comment, cluster)
-	storingComment = strings.Replace(storingComment, "'", "\\'", -1)
-
-	query := fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %v %v COMMENT '%v'", database_name, clusterStatement, storingComment)
+	query := fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %v %v COMMENT '%v'", database_name, clusterStatement, getComment(comment, cluster))
 
 	err := conn.Exec(query)
 	if err != nil {

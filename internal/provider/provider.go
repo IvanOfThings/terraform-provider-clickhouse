@@ -65,7 +65,8 @@ func New(version string) func() *schema.Provider {
 				"clickhouse_dbs": dataSourceDbs(),
 			},
 			ResourcesMap: map[string]*schema.Resource{
-				"clickhouse_db": resourceDb(),
+				"clickhouse_db":    resourceDb(),
+				"clickhouse_table": resourceTable(),
 			},
 		}
 
