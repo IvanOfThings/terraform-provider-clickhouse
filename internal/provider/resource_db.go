@@ -1,4 +1,4 @@
-package provider
+package clickhouse_provider
 
 import (
 	"context"
@@ -16,7 +16,7 @@ func resourceDb() *schema.Resource {
 		Description: "Resource to handle clickhouse databases.",
 
 		CreateContext: resourceDbCreate,
-		ReadContext:   reourceDbRead,
+		ReadContext:   resourceDbRead,
 		DeleteContext: resourceDbDelete,
 
 		Schema: map[string]*schema.Schema{
@@ -62,7 +62,7 @@ func resourceDbCreate(ctx context.Context, d *schema.ResourceData, meta any) dia
 	// client := meta.(*apiClient)
 	client := meta.(apiClient)
 	var diags diag.Diagnostics
-	conn := (*client).clickhouseConnection
+	conn := client.clickhouseConnection
 
 	database_name := d.Get("db_name").(string)
 	iter, err := conn.Fetch(fmt.Sprintf("SELECT name, engine, data_path, metadata_path, uuid, comment FROM system.databases where name = '%v'", database_name))
@@ -113,7 +113,7 @@ func resourceDbRead(ctx context.Context, d *schema.ResourceData, meta any) diag.
 
 	client := meta.(apiClient)
 	var diags diag.Diagnostics
-	conn := (*client).clickhouseConnection
+	conn := client.clickhouseConnection
 
 	database_name := d.Get("db_name").(string)
 	comment := d.Get("comment")
@@ -131,7 +131,7 @@ func resourceDbDelete(ctx context.Context, d *schema.ResourceData, meta any) dia
 
 	client := meta.(apiClient)
 	var diags diag.Diagnostics
-	conn := (*client).clickhouseConnection
+	conn := client.clickhouseConnection
 
 	database_name := d.Get("db_name").(string)
 	err := conn.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %v", database_name))

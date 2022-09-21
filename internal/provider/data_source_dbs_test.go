@@ -1,4 +1,4 @@
-package provider
+package clickhouse_provider
 
 import (
 	"regexp"

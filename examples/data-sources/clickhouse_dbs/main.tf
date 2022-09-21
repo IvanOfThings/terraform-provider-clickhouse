@@ -8,9 +8,8 @@ terraform {
 }
 
 
-provider "clickhouse" {
-  port           = 8123
-  clickhouse_url = "127.0.0.1"
-  username       = "default"
-  password       = ""
+data "clickhouse_dbs" "this" {}
+
+output "all_dbs" {
+  value = data.clickhouse_dbs.this.dbs
 }

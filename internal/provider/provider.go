@@ -1,4 +1,4 @@
-package provider
+package clickhouse_provider
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/joho/godotenv"
 	ch "github.com/leprosus/golang-clickhouse"
 )
 
@@ -61,10 +62,10 @@ func New(version string) func() *schema.Provider {
 				},
 			},
 			DataSourcesMap: map[string]*schema.Resource{
-				"dbs_data_source": dataSourceDbs(),
+				"clickhouse_dbs": dataSourceDbs(),
 			},
 			ResourcesMap: map[string]*schema.Resource{
-				"db_resource": resourceDb(),
+				"clickhouse_db": resourceDb(),
 			},
 		}
 
@@ -75,6 +76,8 @@ func New(version string) func() *schema.Provider {
 }
 
 func getEnvVar(envVarName string) (any, error) {
+
+	godotenv.Load(".env")
 	if v := os.Getenv(envVarName); v != "" {
 		return v, nil
 	}
@@ -88,6 +91,7 @@ type apiClient struct {
 
 func configure(version string, p *schema.Provider) func(context.Context, *schema.ResourceData) (any, diag.Diagnostics) {
 	return func(ctx context.Context, d *schema.ResourceData) (any, diag.Diagnostics) {
+
 		clickhouseUrl := d.Get("clickhouse_url").(string)
 		port := d.Get("port").(int)
 		username := d.Get("username").(string)

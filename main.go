@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 
-	"github.com/IvanOfThings/terraform-provider-clickhouse/internal/provider"
+	clickhouse_provider "github.com/IvanOfThings/terraform-provider-clickhouse/internal/provider"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 )
 
@@ -38,7 +38,7 @@ func main() {
 		// TODO: update this string with the full name of your provider as used in your configs
 		ProviderAddr: "registry.terraform.io/hashicorp/clickhouse",
 
-		ProviderFunc: provider.New(version),
+		ProviderFunc: clickhouse_provider.New(version),
 	}
 
 	plugin.Serve(opts)

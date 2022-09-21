@@ -1,4 +1,4 @@
-package provider
+package clickhouse_provider
 
 import (
 	"context"
@@ -54,9 +54,9 @@ func dataSourceDbs() *schema.Resource {
 }
 
 func dataSourceDbsRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	client := meta.(apiClient)
+	client := meta.(*apiClient)
 	var diags diag.Diagnostics
-	conn := (*client).clickhouseConnection
+	conn := client.clickhouseConnection
 
 	iter, err := conn.Fetch("SELECT name, engine, data_path, metadata_path, uuid, comment FROM system.databases")
 	if err != nil {
@@ -64,6 +64,7 @@ func dataSourceDbsRead(ctx context.Context, d *schema.ResourceData, meta any) di
 	}
 
 	databases := make([]map[string]string, 0)
+	id := ""
 
 	for i := 0; iter.Next(); i++ {
 		result := iter.Result
@@ -91,11 +92,13 @@ func dataSourceDbsRead(ctx context.Context, d *schema.ResourceData, meta any) di
 			return diag.FromErr(err)
 		}
 		databases = append(databases, db)
+		id = id + ":" + name
 
 	}
 
 	if err := d.Set("dbs", databases); err != nil {
 		return diag.FromErr(err)
 	}
+	d.SetId(id)
 	return diags
 }
