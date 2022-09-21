@@ -20,6 +20,12 @@ func resourceDb() *schema.Resource {
 		DeleteContext: resourceDbDelete,
 
 		Schema: map[string]*schema.Schema{
+			"cluster": &schema.Schema{
+				Description: "Cluster name",
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+			},
 			"db_name": &schema.Schema{
 				Description: "Database name",
 				Type:        schema.TypeString,
@@ -57,10 +63,10 @@ func resourceDb() *schema.Resource {
 	}
 }
 
-func resourceDbCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+func resourceDbRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	// use the meta value to retrieve your client from the provider configure method
 	// client := meta.(*apiClient)
-	client := meta.(apiClient)
+	client := meta.(*apiClient)
 	var diags diag.Diagnostics
 	conn := client.clickhouseConnection
 
@@ -109,17 +115,26 @@ func resourceDbCreate(ctx context.Context, d *schema.ResourceData, meta any) dia
 	return diags
 }
 
-func resourceDbRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+func resourceDbCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 
-	client := meta.(apiClient)
+	client := meta.(*apiClient)
 	var diags diag.Diagnostics
 	conn := client.clickhouseConnection
 
 	database_name := d.Get("db_name").(string)
-	comment := d.Get("comment")
-	err := conn.Exec(fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %v COMMENT '%v'", database_name, comment))
-	if err != nil {
-		return diag.FromErr(err)
+	comment := d.Get("comment").(string)
+	cluster, _ := d.Get("cluster").(string)
+	if cluster != "" {
+		err := conn.Exec(fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %v ON CLUSTER %v COMMENT '%v'", database_name, cluster, comment))
+
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	} else {
+		err := conn.Exec(fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %v COMMENT '%v'", database_name, comment))
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	d.SetId(database_name)
@@ -129,14 +144,22 @@ func resourceDbRead(ctx context.Context, d *schema.ResourceData, meta any) diag.
 
 func resourceDbDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 
-	client := meta.(apiClient)
+	client := meta.(*apiClient)
 	var diags diag.Diagnostics
 	conn := client.clickhouseConnection
 
 	database_name := d.Get("db_name").(string)
-	err := conn.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %v", database_name))
-	if err != nil {
-		return diag.FromErr(err)
+	cluster, _ := d.Get("cluster").(string)
+	if cluster != "" {
+		err := conn.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %v ON CLUSTER %v SYNC", database_name, cluster))
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	} else {
+		err := conn.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %v SYNC", database_name))
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
 	d.SetId("")
 	return diags

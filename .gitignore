@@ -35,4 +35,4 @@ website/vendor
 *.winfile eol=crlf
 
 .env
-examples/.terraform.lock.hcl
+**/.terraform.lock.hcl
