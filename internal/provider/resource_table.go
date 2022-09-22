@@ -142,17 +142,9 @@ func resourceTableRead(ctx context.Context, d *schema.ResourceData, meta any) di
 		return diag.FromErr(err)
 	}
 
-	newDiag := diag.Diagnostic{
-		Severity: diag.Error,
-		Summary:  "Table",
-		Detail:   fmt.Sprintf("%v", table),
-	}
-	diags = append(diags, newDiag)
-
 	if err := d.Set("database", &table.database); err != nil {
 		return diag.FromErr(err)
 	}
-
 	if err := d.Set("table_name", &table.table_name); err != nil {
 		return diag.FromErr(err)
 	}
@@ -165,7 +157,6 @@ func resourceTableRead(ctx context.Context, d *schema.ResourceData, meta any) di
 	if err := d.Set("cluster", &table.cluster); err != nil {
 		return diag.FromErr(err)
 	}
-
 	if err := d.Set("columns", &table.columns); err != nil {
 		return diag.FromErr(err)
 	}

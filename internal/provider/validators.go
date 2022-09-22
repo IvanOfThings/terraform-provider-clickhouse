@@ -66,13 +66,13 @@ func validateOnClusterEngine(inValue any, p hashicorpcty.Path) diag.Diagnostics 
 	value := inValue.(string)
 	replicatedTypes := "ReplicatedMergeTree"
 	distributedTypes := "Distributed"
-	validation := fmt.Sprintf("oneof=%v %v %v", replicatedTypes, distributedTypes)
+	validation := fmt.Sprintf("oneof=%v %v", replicatedTypes, distributedTypes)
 	var diags diag.Diagnostics
 	if validate.Var(value, validation) != nil {
 		diag := diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  "wrong value",
-			Detail:   fmt.Sprintf("%q is not %q %q %q", value, replicatedTypes, distributedTypes),
+			Detail:   fmt.Sprintf("%q is not %q %q", value, replicatedTypes, distributedTypes),
 		}
 		diags = append(diags, diag)
 	}
