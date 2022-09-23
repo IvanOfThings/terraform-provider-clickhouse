@@ -1,4 +1,4 @@
-package clickhouse_provider
+package common
 
 import (
 	"fmt"
@@ -91,14 +91,13 @@ func getColumns(conn *ch.Conn, database string, tableName string, errors *[]erro
 			return nil
 		}
 	}
-	fmt.Println(columns)
 	return columns
 }
 
-func getTables(conn *ch.Conn, data *CHDataBase, errors *[]error) []clickhouseTable {
+func GetTables(conn *ch.Conn, data *CHDataBase, errors *[]error) []clickhouseTable {
 	var query string
 	if data != nil {
-		query = fmt.Sprintf("SELECT `database`, `name`, `engine_full`, `engine`, `comment` FROM system.tables where database = '%v' AND name = '%v'", data.database, data.table_name)
+		query = fmt.Sprintf("SELECT `database`, `name`, `engine_full`, `engine`, `comment` FROM system.tables where database = '%v' AND name = '%v'", data.Database, data.Table_name)
 	} else {
 		query = fmt.Sprintf("SELECT `database`, `name`, `engine_full`, `engine`, `comment` FROM system.tables")
 
@@ -138,7 +137,7 @@ func getTables(conn *ch.Conn, data *CHDataBase, errors *[]error) []clickhouseTab
 }
 
 func buildColumnSentence(col CHColumn) string {
-	createRowScript := `%name% %type% %nullability% %special% %compresion_codec% %ttl_expression%`
+	createRowScript := "`%name%` %type% %nullability% %special% %compresion_codec% %ttl_expression%"
 	rowInProgres := strings.Replace(createRowScript, "%name%", col.name, 1)
 	rowInProgres = strings.Replace(rowInProgres, "%type%", col.data_type, 1)
 
@@ -179,17 +178,22 @@ func buildOrderBySentence(order_by []string) string {
 	return strings.Replace(orderBySentence, "%order_by%", strings.Join(order_by, ", "), 1)
 }
 
-func buildCreateONClusterSentence(mappedColumns []CHColumn, db_name string, table_name string, cluster string, engine string, order_by []string, engine_params []string, partition_by *[]TPartitionBy, comment string) string {
+func BuildCreateONClusterSentence(mappedColumns []CHColumn, db_name string, table_name string, cluster string, engine string, order_by []string, engine_params []string, partition_by *[]TPartitionBy, comment string) string {
 	columnsStatement := ""
 	if len(mappedColumns) > 0 {
 		columnsList := buildColumnsSentence(mappedColumns)
 		columnsStatement = "(" + strings.Join(columnsList, ",\n") + ")\n"
 	}
-	createTableScript := `CREATE TABLE IF NOT EXISTS %db_name%.%table_name% ON CLUSTER %cluster%  %columns%  ENGINE = %engine%(%engine_params%) `
+	onClusterStatement := ""
+	if cluster != "" {
+		onClusterStatement = "ON CLUSTER " + cluster + " "
+	}
+
+	createTableScript := `CREATE TABLE IF NOT EXISTS %db_name%.%table_name% %cluster% %columns%  ENGINE = %engine%(%engine_params%) `
 	query := strings.Replace(createTableScript, "%columns%", "\n"+columnsStatement, 1)
 	query = strings.Replace(query, "%db_name%", db_name, 1)
 	query = strings.Replace(query, "%table_name%", table_name, 1)
-	query = strings.Replace(query, "%cluster%", cluster, 1)
+	query = strings.Replace(query, "%cluster%", onClusterStatement, 1)
 	query = strings.Replace(query, "%engine%", engine, 1)
 
 	query = strings.Replace(query, "%engine_params%", strings.Join(engine_params, ", "), 1)

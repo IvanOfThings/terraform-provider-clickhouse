@@ -1,4 +1,4 @@
-package clickhouse_provider
+package common
 
 import (
 	"regexp"
@@ -13,7 +13,7 @@ func mapToPtrString(input interface{}) *string {
 	return _value
 }
 
-func mapPartitionBy(partitionBy interface{}, mappedColumns []CHColumn) (*[]TPartitionBy, error) {
+func MapPartitionBy(partitionBy interface{}, mappedColumns []CHColumn) (*[]TPartitionBy, error) {
 	if partitionBy == nil {
 		return nil, nil
 	}
@@ -24,7 +24,7 @@ func mapPartitionBy(partitionBy interface{}, mappedColumns []CHColumn) (*[]TPart
 		_mappedData := _data.(map[string]interface{})
 
 		_by := _mappedData["by"].(string)
-		err := validateParams(mappedColumns, []string{_by}, "partition_by")
+		err := ValidateParams(mappedColumns, []string{_by}, "partition_by")
 		if err != nil {
 			return nil, err
 		}
@@ -37,7 +37,7 @@ func mapPartitionBy(partitionBy interface{}, mappedColumns []CHColumn) (*[]TPart
 	return &mappedPartitionBy, nil
 }
 
-func mapColums(dataColumns []interface{}) []CHColumn {
+func MapColumns(dataColumns []interface{}) []CHColumn {
 	columns := make([]CHColumn, 0)
 	for i := 0; i < len(dataColumns); i++ {
 		data := dataColumns[i].(map[string]interface{})
@@ -51,7 +51,7 @@ func mapColums(dataColumns []interface{}) []CHColumn {
 	return columns
 }
 
-func mapTableToDatasource(table clickhouseTable) (*dataSourceCHTable, error) {
+func MapTableToDatasource(table clickhouseTable) (*DataSourceCHTable, error) {
 	columns := make([]dataSourceClickhouseColumn, 0)
 	for i := 0; i < len(table.columns); i++ {
 		column := dataSourceClickhouseColumn{
@@ -77,24 +77,24 @@ func mapTableToDatasource(table clickhouseTable) (*dataSourceCHTable, error) {
 		// cluster[0] = strings.Split(engine_params[0], "/")[2]
 	}
 
-	comment, cluster, err := unmarshalComment(table.comment)
+	comment, cluster, err := UnmarshalComment(table.comment)
 	if err != nil {
 		return nil, err
 	}
 
-	return &dataSourceCHTable{
-		database:      table.database,
-		table_name:    table.table_name,
-		engine_full:   table.engine_full,
-		engine:        table.engine,
-		cluster:       &cluster,
-		comment:       comment,
-		engine_params: &engine_params,
-		columns:       columns,
+	return &DataSourceCHTable{
+		Database:      table.database,
+		Table_name:    table.table_name,
+		Engine_full:   table.engine_full,
+		Engine:        table.engine,
+		Cluster:       &cluster,
+		Comment:       comment,
+		Engine_params: &engine_params,
+		Columns:       columns,
 	}, nil
 }
 
-func mapArrayInterfaceToArrayOfStrings(in []interface{}) []string {
+func MapArrayInterfaceToArrayOfStrings(in []interface{}) []string {
 	ret := make([]string, 0)
 	for _, s := range in {
 		ret = append(ret, s.(string))

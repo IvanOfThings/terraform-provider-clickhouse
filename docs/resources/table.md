@@ -3,12 +3,12 @@
 page_title: "clickhouse_table Resource - terraform-provider-clickhouse"
 subcategory: ""
 description: |-
-  
+  Resource to manage tables
 ---
 
 # clickhouse_table (Resource)
 
-
+Resource to manage tables
 
 
 
@@ -17,30 +17,30 @@ description: |-
 
 ### Required
 
-- `cluster` (String)
-- `database` (String)
-- `engine` (String)
-- `engine_params` (List of String)
-- `table_name` (String)
+- `database` (String) DB Name where the table will bellow
+- `engine` (String) Table engine type (Supported types so far: Distributed, ReplicatedReplacingMergeTree, ReplacingMergeTree)
+- `engine_params` (List of String) Engine params in case the engine type requires them
+- `table_name` (String) Table Name
 
 ### Optional
 
-- `columns` (Block List) (see [below for nested schema](#nestedblock--columns))
-- `comment` (String)
-- `order_by` (List of String)
-- `partition_by` (Block List) (see [below for nested schema](#nestedblock--partition_by))
+- `cluster` (String) Cluster Name, it is required for Replicated or Distributed tables and forbidden in other case
+- `column` (Block List) Column (see [below for nested schema](#nestedblock--column))
+- `comment` (String) Database comment, it will be codified in a json along with come metadata information (like cluster name in case of clustering)
+- `order_by` (List of String) Order by columns to use as sorting key
+- `partition_by` (Block List) Partition Key to split data (see [below for nested schema](#nestedblock--partition_by))
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
 
-<a id="nestedblock--columns"></a>
-### Nested Schema for `columns`
+<a id="nestedblock--column"></a>
+### Nested Schema for `column`
 
 Required:
 
-- `name` (String)
-- `type` (String)
+- `name` (String) Column Name
+- `type` (String) Column Type
 
 
 <a id="nestedblock--partition_by"></a>
@@ -48,10 +48,10 @@ Required:
 
 Required:
 
-- `by` (String)
+- `by` (String) Column to use as part of the partition key
 
 Optional:
 
-- `partition_function` (String)
+- `partition_function` (String) Partition function, could be empty or one of following: toYYYYMM, toYYYYMMDD or toYYYYMMDDhhmmss
 
 

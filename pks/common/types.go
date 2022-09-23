@@ -1,4 +1,10 @@
-package clickhouse_provider
+package common
+
+import ch "github.com/leprosus/golang-clickhouse"
+
+type ApiClient struct {
+	ClickhouseConnection *ch.Conn
+}
 
 type clickhouseTablesColumn struct {
 	database                string
@@ -34,8 +40,8 @@ type clickhouseTable struct {
 }
 
 type CHDataBase struct {
-	database   string
-	table_name string
+	Database   string
+	Table_name string
 }
 
 type dataSourceClickhouseColumn struct {
@@ -43,15 +49,15 @@ type dataSourceClickhouseColumn struct {
 	data_type string
 }
 
-type dataSourceCHTable struct {
-	database      string
-	table_name    string
-	engine_full   string
-	engine        string
-	cluster       *string
-	comment       string
-	engine_params *[]string
-	columns       []dataSourceClickhouseColumn
+type DataSourceCHTable struct {
+	Database      string
+	Table_name    string
+	Engine_full   string
+	Engine        string
+	Cluster       *string
+	Comment       string
+	Engine_params *[]string
+	Columns       []dataSourceClickhouseColumn
 }
 
 type CHColumn struct {

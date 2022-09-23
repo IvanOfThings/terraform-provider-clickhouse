@@ -1,4 +1,4 @@
-package clickhouse_provider
+package provider
 
 import (
 	"context"
@@ -7,6 +7,9 @@ import (
 	"net/url"
 	"os"
 
+	"github.com/IvanOfThings/terraform-provider-clickhouse/pks/common"
+	"github.com/IvanOfThings/terraform-provider-clickhouse/pks/datasources"
+	"github.com/IvanOfThings/terraform-provider-clickhouse/pks/resources"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/joho/godotenv"
@@ -68,11 +71,11 @@ func New(version string) func() *schema.Provider {
 				},
 			},
 			DataSourcesMap: map[string]*schema.Resource{
-				"clickhouse_dbs": dataSourceDbs(),
+				"clickhouse_dbs": datasources.DataSourceDbs(),
 			},
 			ResourcesMap: map[string]*schema.Resource{
-				"clickhouse_db":    resourceDb(),
-				"clickhouse_table": resourceTable(),
+				"clickhouse_db":    resources.ResourceDb(),
+				"clickhouse_table": resources.ResourceTable(),
 			},
 		}
 
@@ -92,10 +95,6 @@ func getEnvVar(envVarName string) (any, error) {
 
 }
 
-type apiClient struct {
-	clickhouseConnection *ch.Conn
-}
-
 func configure(version string, p *schema.Provider) func(context.Context, *schema.ResourceData) (any, diag.Diagnostics) {
 	return func(ctx context.Context, d *schema.ResourceData) (any, diag.Diagnostics) {
 
@@ -111,6 +110,6 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 			return nil, diag.FromErr(fmt.Errorf("Error retrieving clickhouse uri"))
 		}
 
-		return &apiClient{clickhouseConnection: clickhouseConnection}, diags
+		return &common.ApiClient{ClickhouseConnection: clickhouseConnection}, diags
 	}
 }

@@ -1,5 +1,10 @@
 {
   "cSpell.words": [
+    "datasources",
+    "testutils",
     "tflog"
+  ],
+  "go.buildFlags": [
+    "-tags=testing"
   ]
 }

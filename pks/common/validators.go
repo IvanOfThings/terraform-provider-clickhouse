@@ -1,4 +1,4 @@
-package clickhouse_provider
+package common
 
 import (
 	"errors"
@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 )
 
-func validateParams(mappedColumns []CHColumn, params []string, params_name string) error {
+func ValidateParams(mappedColumns []CHColumn, params []string, params_name string) error {
 	for _, param := range params {
 		found := false
 		for _, column := range mappedColumns {
@@ -26,7 +26,7 @@ func validateParams(mappedColumns []CHColumn, params []string, params_name strin
 	return nil
 }
 
-func validatePartitionBy(inValue any, p hashicorpcty.Path) diag.Diagnostics {
+func ValidatePartitionBy(inValue any, p hashicorpcty.Path) diag.Diagnostics {
 	validate := v.New()
 	value := inValue.(string)
 	toAllowedPartitioningFunctions := "toYYYYMM toYYYYMMDD toYYYYMMDDhhmmss"
@@ -43,11 +43,11 @@ func validatePartitionBy(inValue any, p hashicorpcty.Path) diag.Diagnostics {
 	return diags
 }
 
-func validateType(inValue any, p hashicorpcty.Path) diag.Diagnostics {
+func ValidateType(inValue any, p hashicorpcty.Path) diag.Diagnostics {
 	validate := v.New()
 	value := inValue.(string)
 	uintTypes := "UInt8 UInt16 UInt32 UInt64 UInt128 UInt256 Int8 Int16 Int32 Int64 Int128 Int256 Float32 Float64"
-	otherTypes := "Bool String UUID Date Date32 Datetime Datetime64 LowCardinality JSON"
+	otherTypes := "Bool String UUID Date Date32 DateTime DateTime64 LowCardinality JSON"
 	validation := fmt.Sprintf("oneof=%v %v", uintTypes, otherTypes)
 	var diags diag.Diagnostics
 	if validate.Var(value, validation) != nil {
@@ -61,18 +61,19 @@ func validateType(inValue any, p hashicorpcty.Path) diag.Diagnostics {
 	return diags
 }
 
-func validateOnClusterEngine(inValue any, p hashicorpcty.Path) diag.Diagnostics {
+func ValidateOnClusterEngine(inValue any, p hashicorpcty.Path) diag.Diagnostics {
 	validate := v.New()
 	value := inValue.(string)
+	mergeTreeTypes := "ReplacingMergeTree"
 	replicatedTypes := "ReplicatedMergeTree"
 	distributedTypes := "Distributed"
-	validation := fmt.Sprintf("oneof=%v %v", replicatedTypes, distributedTypes)
+	validation := fmt.Sprintf("oneof=%v %v %v", replicatedTypes, distributedTypes, mergeTreeTypes)
 	var diags diag.Diagnostics
 	if validate.Var(value, validation) != nil {
 		diag := diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  "wrong value",
-			Detail:   fmt.Sprintf("%q is not %q %q", value, replicatedTypes, distributedTypes),
+			Detail:   fmt.Sprintf("%q is not %q %q %q", value, replicatedTypes, distributedTypes, mergeTreeTypes),
 		}
 		diags = append(diags, diag)
 	}

@@ -8,7 +8,7 @@ terraform {
 }
 
 provider "clickhouse" {
-  port           = 8123
+  port           = 8923
   clickhouse_url = "127.0.0.1"
   username       = "default"
   password       = ""
