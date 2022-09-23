@@ -62,7 +62,7 @@ jobs:
     runs-on: ubuntu-latest    
 
     services:
-      postgres:
+      clickhouse:
         image: clickhouse/clickhouse-server
                       
         ports:
@@ -71,7 +71,7 @@ jobs:
           - 9099:9009   
         # Set health checks to wait until redis has started
         options: >-
-          --health-cmd 'clickhouse-client --database=system --query="select * from databases"'
+          --health-cmd "clickhouse-client --database=system --query='select * from databases'"
           --health-interval 15s
           --health-timeout 5s
           --health-retries 5
