@@ -8,7 +8,10 @@ terraform {
 }
 
 provider "clickhouse" {
-  port = 8123
+  port           = 8123
+  clickhouse_url = "127.0.0.1"
+  username       = "default"
+  password       = ""
 }
 
 module "databases" {
