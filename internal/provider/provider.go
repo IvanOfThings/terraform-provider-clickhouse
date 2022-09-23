@@ -45,7 +45,10 @@ func New(version string) func() *schema.Provider {
 					Optional:  true,
 					Sensitive: true,
 					DefaultFunc: func() (any, error) {
-						return getEnvVar("TF_CLICKHOUSE_PASSWORD")
+						if password, _ := getEnvVar("TF_CLICKHOUSE_PASSWORD"); password != nil {
+							return password, nil
+						}
+						return "", nil
 					},
 				},
 				"clickhouse_url": &schema.Schema{
@@ -59,6 +62,9 @@ func New(version string) func() *schema.Provider {
 				"port": &schema.Schema{
 					Type:     schema.TypeInt,
 					Required: true,
+					DefaultFunc: func() (any, error) {
+						return getEnvVar("TF_CLICKHOUSE_PORT")
+					},
 				},
 			},
 			DataSourcesMap: map[string]*schema.Resource{

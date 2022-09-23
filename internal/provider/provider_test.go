@@ -6,11 +6,22 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+var testAccProviders map[string]*schema.Provider
+var testAccProvider *schema.Provider
+
+func init() {
+	testAccProvider = New("dev")()
+	testAccProviders = map[string]*schema.Provider{
+		"clickhouse": testAccProvider,
+	}
+}
+
 // providerFactories are used to instantiate a provider during acceptance testing.
 // The factory function will be invoked for every Terraform CLI command executed
 // to create a provider server to which the CLI can reattach.
 var providerFactories = map[string]func() (*schema.Provider, error){
-	"clickhouse": func() (*schema.Provider, error) {
+
+	"clickhouse": func() (testAccProvider *schema.Provider, e error) {
 		return New("dev")(), nil
 	},
 }

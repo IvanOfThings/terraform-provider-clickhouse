@@ -95,10 +95,9 @@ func dataSourceDbsRead(ctx context.Context, d *schema.ResourceData, meta any) di
 		id = id + ":" + name
 
 	}
-
 	if err := d.Set("dbs", databases); err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(id)
+	d.SetId("databases_read")
 	return diags
 }

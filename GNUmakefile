@@ -11,7 +11,7 @@ default: testacc
 # Run acceptance tests
 .PHONY: testacc
 testacc:
-	TF_ACC=1 go test ./... -v $(TESTARGS) -timeout 120m
+	TF_ACC=1 TF_CLICKHOUSE_URL="127.0.0.1" TF_CLICKHOUSE_USERNAME="default" TF_CLICKHOUSE_PASSWORD="" TF_CLICKHOUSE_PORT=8923 go test ./... -v $(TESTARGS) -timeout 120m
 
 build:
 	go build -o ${BINARY}

@@ -59,7 +59,17 @@ jobs:
   test:
     name: Matrix Test
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest    
+
+    services:
+      postgres:
+        image: clickhouse/clickhouse-server
+                      
+        ports:
+          - 8923:8123
+          - 9090:9000
+          - 9099:9009
+          
     timeout-minutes: 15
     strategy:
       fail-fast: false
@@ -98,6 +108,9 @@ jobs:
       timeout-minutes: 10
       env:
         TF_ACC: "1"
+        TF_CLICKHOUSE_URL: "127.0.0.1"
+        TF_CLICKHOUSE_USERNAME: "default"
+        TF_CLICKHOUSE_PASSWORD: ""
 
         # Set whatever additional acceptance test env vars here. You can
         # optionally use data from your repository secrets using the
