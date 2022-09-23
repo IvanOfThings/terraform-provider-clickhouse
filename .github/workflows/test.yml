@@ -114,7 +114,7 @@ jobs:
       timeout-minutes: 10
       env:
         TF_ACC: "1"
-        TF_CLICKHOUSE_URL: "clickhouse"
+        TF_CLICKHOUSE_URL: "127.0.0.1"
         TF_CLICKHOUSE_USERNAME: "default"
         TF_CLICKHOUSE_PASSWORD: ""
         TF_CLICKHOUSE_PORT: "8123"
