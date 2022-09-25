@@ -9,6 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
+// TODO: Testing trying to delete a db that have other resources on it (like database.)
+
 func TestAccResourceDb(t *testing.T) {
 
 	resource.UnitTest(t, resource.TestCase{

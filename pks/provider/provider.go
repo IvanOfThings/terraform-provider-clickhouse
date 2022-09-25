@@ -36,17 +36,25 @@ func New(version string) func() *schema.Provider {
 	return func() *schema.Provider {
 		p := &schema.Provider{
 			Schema: map[string]*schema.Schema{
+				"default_cluster": &schema.Schema{
+					Description: "Default cluster, if provided will be used when no cluster is provided",
+					Type:        schema.TypeString,
+					Optional:    true,
+					Default:     "",
+				},
 				"username": &schema.Schema{
-					Type:     schema.TypeString,
-					Optional: true,
+					Description: "Clickhouse username with admin privileges",
+					Type:        schema.TypeString,
+					Optional:    true,
 					DefaultFunc: func() (any, error) {
 						return getEnvVar("TF_CLICKHOUSE_USERNAME")
 					},
 				},
 				"password": &schema.Schema{
-					Type:      schema.TypeString,
-					Optional:  true,
-					Sensitive: true,
+					Description: "Clickhouse user password with admin privileges",
+					Type:        schema.TypeString,
+					Optional:    true,
+					Sensitive:   true,
 					DefaultFunc: func() (any, error) {
 						if password, _ := getEnvVar("TF_CLICKHOUSE_PASSWORD"); password != nil {
 							return password, nil
@@ -55,16 +63,18 @@ func New(version string) func() *schema.Provider {
 					},
 				},
 				"clickhouse_url": &schema.Schema{
-					Type:      schema.TypeString,
-					Required:  true,
-					Sensitive: true,
+					Description: "Clickhouse server url",
+					Type:        schema.TypeString,
+					Required:    true,
+					Sensitive:   true,
 					DefaultFunc: func() (any, error) {
 						return getEnvVar("TF_CLICKHOUSE_URL")
 					},
 				},
 				"port": &schema.Schema{
-					Type:     schema.TypeInt,
-					Required: true,
+					Description: "Clickhouse server port",
+					Type:        schema.TypeInt,
+					Required:    true,
 					DefaultFunc: func() (any, error) {
 						return getEnvVar("TF_CLICKHOUSE_PORT")
 					},
@@ -101,6 +111,7 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 		clickhouseUrl := d.Get("clickhouse_url").(string)
 		port := d.Get("port").(int)
 		username := d.Get("username").(string)
+		defaultCluster := d.Get("default_cluster").(string)
 		password := d.Get("password").(string)
 		clickhouseConnection := ch.New(clickhouseUrl, port, username, url.QueryEscape(password))
 
@@ -110,6 +121,6 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 			return nil, diag.FromErr(fmt.Errorf("Error retrieving clickhouse uri"))
 		}
 
-		return &common.ApiClient{ClickhouseConnection: clickhouseConnection}, diags
+		return &common.ApiClient{ClickhouseConnection: clickhouseConnection, DefaultCluster: defaultCluster}, diags
 	}
 }

@@ -172,7 +172,7 @@ func resourceTableRead(ctx context.Context, d *schema.ResourceData, meta any) di
 	if err := d.Set("engine_params", &table.Engine_params); err != nil {
 		return diag.FromErr(err)
 	}
-	if err := d.Set("cluster", &table.Cluster); err != nil {
+	if err := d.Set("cluster", table.Cluster); err != nil {
 		return diag.FromErr(err)
 	}
 	if err := d.Set("column", &table.Columns); err != nil {
@@ -189,10 +189,13 @@ func resourceTableCreate(ctx context.Context, d *schema.ResourceData, meta any) 
 
 	var diags diag.Diagnostics
 
+	client := meta.(*common.ApiClient)
+	conn := client.ClickhouseConnection
+
+	cluster := d.Get("cluster").(string)
 	database := d.Get("database").(string)
 	table_name := d.Get("table_name").(string)
 	columns := d.Get("column").([]interface{})
-	cluster := d.Get("cluster").(string)
 	engine := d.Get("engine").(string)
 	comment := d.Get("comment").(string)
 	engine_params := common.MapArrayInterfaceToArrayOfStrings(d.Get("engine_params").([]interface{}))
@@ -210,17 +213,14 @@ func resourceTableCreate(ctx context.Context, d *schema.ResourceData, meta any) 
 		return diag.FromErr(err)
 	}
 
-	query := common.BuildCreateONClusterSentence(mappedColumns, database, table_name, cluster, engine, order_by, engine_params, mappedPartitionBy, common.GetComment(comment, cluster))
-
-	client := meta.(*common.ApiClient)
-	conn := client.ClickhouseConnection
+	query, clusterToUse := common.BuildCreateONClusterSentence(mappedColumns, database, table_name, cluster, client.DefaultCluster, engine, order_by, engine_params, mappedPartitionBy, common.GetComment(comment, cluster))
 
 	err = conn.Exec(query)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	d.SetId(cluster + ":" + database + ":" + table_name)
+	d.SetId(clusterToUse + ":" + database + ":" + table_name)
 
 	return diags
 
@@ -235,12 +235,9 @@ func resourceTableDelete(ctx context.Context, d *schema.ResourceData, meta any) 
 	database := d.Get("database").(string)
 	table_name := d.Get("table_name").(string)
 	cluster := d.Get("cluster").(string)
+	clusterStatement, _ := common.GetClusterStatement(cluster, client.DefaultCluster)
 
-	onClusterStatement := ""
-	if cluster != "" {
-		onClusterStatement = "on cluster " + cluster + "SYNC"
-	}
-	err := conn.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %v.%v "+onClusterStatement, database, table_name))
+	err := conn.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %v.%v "+clusterStatement, database, table_name))
 
 	if err != nil {
 		return diag.FromErr(err)
