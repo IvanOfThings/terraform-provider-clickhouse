@@ -7,9 +7,9 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/IvanOfThings/terraform-provider-clickhouse/pks/common"
-	"github.com/IvanOfThings/terraform-provider-clickhouse/pks/datasources"
-	"github.com/IvanOfThings/terraform-provider-clickhouse/pks/resources"
+	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/common"
+	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/datasources"
+	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/resources"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/joho/godotenv"

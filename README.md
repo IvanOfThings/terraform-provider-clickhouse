@@ -4,11 +4,9 @@ _This template repository is built on the [Terraform Plugin SDK](https://github.
 
 ----
 
-![.github/workflows/ci.yml](https://github.com/IvanOfThings/terraform-provider-clickhouse/workflows/.github/workflows/ci.yml/badge.svg)
-
 This is a terraform provider plugin for managing Clickhouse databases and tables in a simple way.
 
-Note this provider it's in a very early state so only few table engines are allowed.
+_Note_: This provider it's in a very early state so only few table engines are allowed for replicated tables so far.
 
 
 ## Requirements
@@ -153,7 +151,7 @@ resource "clickhouse_table" "replicated_table" {
 
 resource "clickhouse_table" "distributed_table" {
   database      = clickhouse_db.test_db_clustered.db_name
-  table_name    = "t1_dist_6"
+  table_name    = "distributed_table"
   cluster       = clickhouse_db.test_db_clustered.cluster
   engine        = "Distributed"
   engine_params = [clickhouse_db.test_db_clustered.cluster, clickhouse_db.test_db_clustered.db_name, clickhouse_table.replicated_table.table_name, "rand()"]

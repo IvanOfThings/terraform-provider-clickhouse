@@ -1,0 +1,15 @@
+# Based on https://github.com/leonsteinhaeuser/project-beta-automations
+
+name: "Creating version with semantic release on merging Issues/PRs"
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  add-content-to-project:
+    name: "Add Content to project"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Release with semantic-release"
+        run: npx semantic-release --debug

@@ -5,7 +5,7 @@ package testutils
 import (
 	"testing"
 
-	"github.com/IvanOfThings/terraform-provider-clickhouse/pks/provider"
+	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/provider"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 

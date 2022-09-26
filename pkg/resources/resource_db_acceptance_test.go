@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/IvanOfThings/terraform-provider-clickhouse/pks/testutils"
+	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
