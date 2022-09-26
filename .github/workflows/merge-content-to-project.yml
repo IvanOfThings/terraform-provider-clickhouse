@@ -10,7 +10,6 @@ jobs:
   merge-content-to-project:
     name: "Add Content to project"
     runs-on: ubuntu-latest
-    environment: releasing-env
     
     steps:
       - name: Check out code into the Go module directory
