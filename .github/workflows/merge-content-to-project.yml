@@ -20,4 +20,4 @@ jobs:
         run: npx semantic-release --debug
         env:
           # GitHub sets this automatically
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
