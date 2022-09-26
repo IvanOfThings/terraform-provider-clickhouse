@@ -68,6 +68,7 @@ func resourceDbRead(ctx context.Context, d *schema.ResourceData, meta any) diag.
 	client := meta.(*common.ApiClient)
 	var diags diag.Diagnostics
 	conn := client.ClickhouseConnection
+	defaultCluster := client.DefaultCluster
 
 	database_name := d.Get("db_name").(string)
 	iter, err := conn.Fetch(fmt.Sprintf("SELECT name, engine, data_path, metadata_path, uuid, comment FROM system.databases where name = '%v'", database_name))
@@ -87,7 +88,12 @@ func resourceDbRead(ctx context.Context, d *schema.ResourceData, meta any) diag.
 	storedComment, _ := result.String("comment")
 	comment, cluster, err := common.UnmarshalComment(storedComment)
 	if err != nil {
-		return diag.FromErr(err)
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Warning,
+			Summary:  fmt.Sprintf("Unable to unmarshal comments for db %q", name),
+			Detail:   "Unable to unmarshal comments in order to retrieve cluster information for the table, so that default cluster is going to be used instead.",
+		})
+		comment, cluster = storedComment, defaultCluster
 	}
 
 	d.Set("db_name", name)
@@ -111,22 +117,21 @@ func resourceDbCreate(ctx context.Context, d *schema.ResourceData, meta any) dia
 	var diags diag.Diagnostics
 	conn := client.ClickhouseConnection
 
-	database_name := d.Get("db_name").(string)
-	comment := d.Get("comment").(string)
 	cluster, _ := d.Get("cluster").(string)
 
-	clusterStatement := ""
-	if cluster != "" {
-		clusterStatement = "ON CLUSTER " + cluster
-	}
-	query := fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %v %v COMMENT '%v'", database_name, clusterStatement, common.GetComment(comment, cluster))
+	clusterStatement, clusterToUse := common.GetClusterStatement(cluster, client.DefaultCluster)
+
+	database_name := d.Get("db_name").(string)
+	comment := d.Get("comment").(string)
+
+	query := fmt.Sprintf("CREATE DATABASE %v %v COMMENT '%v'", database_name, clusterStatement, common.GetComment(comment, cluster))
 
 	err := conn.Exec(query)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	d.SetId(cluster + ":" + database_name)
+	d.SetId(clusterToUse + ":" + database_name)
 
 	return diags
 }
@@ -138,11 +143,23 @@ func resourceDbDelete(ctx context.Context, d *schema.ResourceData, meta any) dia
 	conn := client.ClickhouseConnection
 
 	database_name := d.Get("db_name").(string)
-	cluster, _ := d.Get("cluster").(string)
-	clusterStatement := ""
-	if cluster != "" {
-		clusterStatement = "ON CLUSTER " + cluster
+
+	dbResources, errors := common.GetResourceNamesOnDataBases(conn, database_name)
+	if len(errors) > 0 {
+		return diag.FromErr(errors[0])
 	}
+	if len(dbResources.TableNames) > 0 {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("Unable to delete db resource %q", database_name),
+			Detail:   fmt.Sprintf("DB resource is used by another resources and is not possible to delete it. Tables: %v.", dbResources.TableNames),
+		})
+		return diags
+	}
+
+	cluster, _ := d.Get("cluster").(string)
+	clusterStatement, _ := common.GetClusterStatement(cluster, client.DefaultCluster)
+
 	err := conn.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %v %v SYNC", database_name, clusterStatement))
 	if err != nil {
 		return diag.FromErr(err)

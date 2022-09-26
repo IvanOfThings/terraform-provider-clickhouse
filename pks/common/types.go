@@ -4,6 +4,11 @@ import ch "github.com/leprosus/golang-clickhouse"
 
 type ApiClient struct {
 	ClickhouseConnection *ch.Conn
+	DefaultCluster       string
+}
+
+type CHDbResources struct {
+	TableNames []string
 }
 
 type clickhouseTablesColumn struct {

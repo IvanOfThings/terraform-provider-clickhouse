@@ -18,7 +18,6 @@ resource "clickhouse_db" "test_db_clustered" {
 }
 
 
-
 resource "clickhouse_table" "replicated_table" {
   database      = clickhouse_db.test_db_clustered.db_name
   table_name    = "replicated_table"
@@ -59,6 +58,7 @@ resource "clickhouse_table" "distributed_table" {
   engine        = "Distributed"
   engine_params = ["'{cluster}'", clickhouse_db.test_db_clustered.db_name, clickhouse_table.replicated_table.table_name, "rand()"]
 }
+
 
 
 

@@ -36,7 +36,8 @@ provider "clickhouse" {
 
 ### Optional
 
-- `clickhouse_url` (String, Sensitive)
-- `password` (String, Sensitive)
-- `port` (Number)
-- `username` (String)
+- `clickhouse_url` (String, Sensitive) Clickhouse server url
+- `default_cluster` (String) Default cluster, if provided will be used when no cluster is provided
+- `password` (String, Sensitive) Clickhouse user password with admin privileges
+- `port` (Number) Clickhouse server port
+- `username` (String) Clickhouse username with admin privileges

@@ -94,6 +94,32 @@ func getColumns(conn *ch.Conn, database string, tableName string, errors *[]erro
 	return columns
 }
 
+func GetResourceNamesOnDataBases(conn *ch.Conn, databaseName string) (resources *CHDbResources, errors []error) {
+	query := fmt.Sprintf("SELECT `name` FROM system.tables where database = '%v'", databaseName)
+	errors = make([]error, 0)
+	iter, err := conn.Fetch(query)
+	if err != nil {
+		errors = append(errors, err)
+		return nil, errors
+	}
+
+	tableNames := make([]string, 0)
+
+	for i := 0; iter.Next(); i++ {
+		result := iter.Result
+
+		table := *toString(result, "name", &errors)
+		if len(errors) > 0 {
+			return nil, errors
+		}
+
+		tableNames = append(tableNames, table)
+	}
+	return &CHDbResources{
+		TableNames: tableNames,
+	}, errors
+}
+
 func GetTables(conn *ch.Conn, data *CHDataBase, errors *[]error) []clickhouseTable {
 	var query string
 	if data != nil {
@@ -178,22 +204,20 @@ func buildOrderBySentence(order_by []string) string {
 	return strings.Replace(orderBySentence, "%order_by%", strings.Join(order_by, ", "), 1)
 }
 
-func BuildCreateONClusterSentence(mappedColumns []CHColumn, db_name string, table_name string, cluster string, engine string, order_by []string, engine_params []string, partition_by *[]TPartitionBy, comment string) string {
+func BuildCreateONClusterSentence(mappedColumns []CHColumn, db_name string, table_name string, cluster string, defaultCluster string, engine string, order_by []string, engine_params []string, partition_by *[]TPartitionBy, comment string) (query string, clusterToUse string) {
 	columnsStatement := ""
 	if len(mappedColumns) > 0 {
 		columnsList := buildColumnsSentence(mappedColumns)
 		columnsStatement = "(" + strings.Join(columnsList, ",\n") + ")\n"
 	}
-	onClusterStatement := ""
-	if cluster != "" {
-		onClusterStatement = "ON CLUSTER " + cluster + " "
-	}
 
-	createTableScript := `CREATE TABLE IF NOT EXISTS %db_name%.%table_name% %cluster% %columns%  ENGINE = %engine%(%engine_params%) `
-	query := strings.Replace(createTableScript, "%columns%", "\n"+columnsStatement, 1)
+	clusterStatement, clusterToUse := GetClusterStatement(cluster, defaultCluster)
+
+	createTableScript := `CREATE TABLE %db_name%.%table_name% %cluster% %columns%  ENGINE = %engine%(%engine_params%) `
+	query = strings.Replace(createTableScript, "%columns%", "\n"+columnsStatement, 1)
 	query = strings.Replace(query, "%db_name%", db_name, 1)
 	query = strings.Replace(query, "%table_name%", table_name, 1)
-	query = strings.Replace(query, "%cluster%", onClusterStatement, 1)
+	query = strings.Replace(query, "%cluster%", clusterStatement, 1)
 	query = strings.Replace(query, "%engine%", engine, 1)
 
 	query = strings.Replace(query, "%engine_params%", strings.Join(engine_params, ", "), 1)
@@ -207,5 +231,5 @@ func BuildCreateONClusterSentence(mappedColumns []CHColumn, db_name string, tabl
 
 	query = strings.Replace(query+" COMMENT '%_comment_%'", "%_comment_%", comment, 1)
 
-	return query
+	return query, clusterToUse
 }

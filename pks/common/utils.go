@@ -32,6 +32,7 @@ func UnmarshalComment(storedComment string) (comment string, cluster string, err
 	}
 	comment = dat["comment"].(string)
 	cluster = dat["cluster"].(string)
+
 	return comment, cluster, err
 }
 
@@ -64,4 +65,16 @@ func toUint64(result ch.Result, field string, errors *[]error) *uint64 {
 		return nil
 	}
 	return &valueUint
+}
+
+func GetClusterStatement(cluster string, defaultCluster string) (clusterStatement string, clusterToUse string) {
+	clusterToUse = defaultCluster
+	if cluster != "" {
+		clusterToUse = cluster
+	}
+	clusterStatement = ""
+	if clusterToUse != "" {
+		clusterStatement = "ON CLUSTER " + clusterToUse
+	}
+	return clusterStatement, clusterToUse
 }

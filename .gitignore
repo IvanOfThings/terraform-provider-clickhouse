@@ -36,3 +36,5 @@ website/vendor
 
 .env
 **/.terraform.lock.hcl
+
+/examples/resources/schema_migrations/**
