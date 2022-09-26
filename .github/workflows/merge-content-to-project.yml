@@ -19,4 +19,4 @@ jobs:
         run: npx semantic-release --debug
         env:
           # GitHub sets this automatically
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.TF_DEVEX_PROJECT_GITHUB_TOKEN }}
