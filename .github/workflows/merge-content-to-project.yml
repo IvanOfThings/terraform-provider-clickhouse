@@ -10,6 +10,10 @@ jobs:
   add-content-to-project:
     name: "Add Content to project"
     runs-on: ubuntu-latest
+    
     steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v3
+      
       - name: "Release with semantic-release"
         run: npx semantic-release --debug
