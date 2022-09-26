@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 
-	clickhouse_provider "github.com/IvanOfThings/terraform-provider-clickhouse/pks/provider"
+	clickhouse_provider "github.com/IvanOfThings/terraform-provider-clickhouse/pkg/provider"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 )
 

@@ -1,9 +1,9 @@
 # Based on https://github.com/leonsteinhaeuser/project-beta-automations
 
-name: "Add Issues/PRs to TF Provider DevEx team board"
+name: "Creating version with semantic release on merging Issues/PRs"
 
 on:
-  pull_request:
+  push:
     branches: [master]
 
 jobs:
@@ -12,4 +12,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "Release with semantic-release"
-        run: npx semantic-release
+        run: npx semantic-release --debug
