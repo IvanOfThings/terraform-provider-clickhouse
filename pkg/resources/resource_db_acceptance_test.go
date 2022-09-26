@@ -22,7 +22,7 @@ func TestAccResourceDb(t *testing.T) {
 				Config: dbConfig(testResourceDBDatabaseName, testResourceDBDatabaseComment),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(
-						"clickhouse_db.new_db", "db_name", regexp.MustCompile("^"+testResourceDBDatabaseName)),
+						"clickhouse_db.new_db", "name", regexp.MustCompile("^"+testResourceDBDatabaseName)),
 					resource.TestMatchResourceAttr(
 						"clickhouse_db.new_db", "comment", regexp.MustCompile("^"+testResourceDBDatabaseComment)),
 				),
@@ -32,7 +32,7 @@ func TestAccResourceDb(t *testing.T) {
 				Config: dbConfig(testResourceDBDatabaseName2, testResourceDBDatabaseComment),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(
-						"clickhouse_db.new_db", "db_name", regexp.MustCompile("^"+testResourceDBDatabaseName2)),
+						"clickhouse_db.new_db", "name", regexp.MustCompile("^"+testResourceDBDatabaseName2)),
 					resource.TestMatchResourceAttr(
 						"clickhouse_db.new_db", "comment", regexp.MustCompile("^"+testResourceDBDatabaseComment)),
 				),
@@ -42,7 +42,7 @@ func TestAccResourceDb(t *testing.T) {
 				Config: dbConfig(testResourceDBDatabaseName2, testResourceDBDatabaseComment2),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(
-						"clickhouse_db.new_db", "db_name", regexp.MustCompile("^"+testResourceDBDatabaseName2)),
+						"clickhouse_db.new_db", "name", regexp.MustCompile("^"+testResourceDBDatabaseName2)),
 					resource.TestMatchResourceAttr(
 						"clickhouse_db.new_db", "comment", regexp.MustCompile("^"+testResourceDBDatabaseComment2)),
 				),
@@ -59,7 +59,7 @@ const testResourceDBDatabaseComment2 = "This is a testing database 2"
 func dbConfig(databaseName string, comment string) string {
 	s := `
 	resource "clickhouse_db" "new_db" {
-		db_name = "%v"
+		name = "%v"
 		comment = "%v"
 	}
 `

@@ -7,7 +7,7 @@ import (
 )
 
 type DataSourceDbsItem struct {
-	DbName       string `json:"db_name"`
+	DbName       string `json:"name"`
 	Engine       string `json:"engine"`
 	DataPath     string `json:"data_path"`
 	MetadataPath string `json:"metadata_path"`

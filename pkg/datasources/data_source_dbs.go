@@ -21,7 +21,7 @@ func DataSourceDbs() *schema.Resource {
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"db_name": &schema.Schema{
+						"name": &schema.Schema{
 							Description: "DB Name",
 							Type:        schema.TypeString,
 							Computed:    true,

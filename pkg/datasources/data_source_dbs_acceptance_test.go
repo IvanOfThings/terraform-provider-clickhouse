@@ -54,7 +54,7 @@ func checkDatabases() resource.TestCheckFunc {
 
 		dbIdx := -1
 		for i := 0; i < nDbs; i++ {
-			idxName := fmt.Sprintf("dbs.%d.db_name", i)
+			idxName := fmt.Sprintf("dbs.%d.name", i)
 			if instanceState.Attributes[idxName] == databaseName {
 				dbIdx = i
 				break

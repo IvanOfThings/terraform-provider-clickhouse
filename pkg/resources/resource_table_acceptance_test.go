@@ -23,11 +23,11 @@ func TestAccResourceTable(t *testing.T) {
 				Config: tableConfigWithName(testResourceTableDatabaseName, testResourceTableTableName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(
-						"clickhouse_db.new_db_resource", "db_name", regexp.MustCompile("^"+testResourceTableDatabaseName)),
+						"clickhouse_db.new_db_resource", "name", regexp.MustCompile("^"+testResourceTableDatabaseName)),
 					resource.TestMatchResourceAttr(
 						"clickhouse_db.new_db_resource", "comment", regexp.MustCompile("^this is a comment")),
 
-					resource.TestCheckResourceAttr("clickhouse_table.table", "table_name", testResourceTableTableName),
+					resource.TestCheckResourceAttr("clickhouse_table.table", "name", testResourceTableTableName),
 					resource.TestCheckResourceAttr("clickhouse_table.table", "database", testResourceTableDatabaseName),
 					resource.TestCheckNoResourceAttr("clickhouse_table.table", "cluster"),
 					resource.TestCheckResourceAttr("clickhouse_table.table", "comment", "This is just a new table"),
@@ -52,13 +52,13 @@ func TestAccResourceTable(t *testing.T) {
 func tableConfigWithName(database string, tableName string) string {
 	s := `
 	resource "clickhouse_db" "new_db_resource" {
-		db_name = "%_database_%"
+		name = "%_database_%"
 		comment = "this is a comment"
 	}
 	
 	resource "clickhouse_table" "table" {
-		database = clickhouse_db.new_db_resource.db_name
-		table_name = "%_tableName_%"
+		database = clickhouse_db.new_db_resource.name
+		name = "%_tableName_%"
 		engine = "ReplacingMergeTree"
 		engine_params = ["eventTime"]
 		order_by = ["key"]

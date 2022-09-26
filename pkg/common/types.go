@@ -37,7 +37,7 @@ type clickhouseTablesColumn struct {
 
 type clickhouseTable struct {
 	database    string
-	table_name  string
+	name        string
 	engine      string
 	engine_full string
 	comment     string
@@ -45,8 +45,8 @@ type clickhouseTable struct {
 }
 
 type CHDataBase struct {
-	Database   string
-	Table_name string
+	Database string
+	Name     string
 }
 
 type dataSourceClickhouseColumn struct {
@@ -56,7 +56,7 @@ type dataSourceClickhouseColumn struct {
 
 type DataSourceCHTable struct {
 	Database      string
-	Table_name    string
+	Name          string
 	Engine_full   string
 	Engine        string
 	Cluster       *string

@@ -1,8 +1,8 @@
 terraform {
   required_providers {
     clickhouse = {
-      version = "0.1.0"
-      source  = "hashicorp.com/edu/clickhouse"
+      version = "2.0.0"
+      source  = "hashicorp.com/ivanofthings/clickhouse"
     }
   }
 }
@@ -12,15 +12,15 @@ provider "clickhouse" {
 }
 
 resource "clickhouse_db" "test_db_clustered" {
-  db_name = "database_test_10"
-  comment = "This is a test database"
+  name    = "awesome_database"
+  comment = "This is an awesome database"
   cluster = "'{cluster}'"
 }
 
 
 resource "clickhouse_table" "replicated_table" {
-  database      = clickhouse_db.test_db_clustered.db_name
-  table_name    = "replicated_table"
+  database      = clickhouse_db.test_db_clustered.name
+  name          = "replicated_table"
   cluster       = "'{cluster}'"
   engine        = "ReplicatedMergeTree"
   engine_params = ["'/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}'", "'{replica}'"]
@@ -52,11 +52,15 @@ resource "clickhouse_table" "replicated_table" {
 
 
 resource "clickhouse_table" "distributed_table" {
-  database      = clickhouse_db.test_db_clustered.db_name
-  table_name    = "t1_dist_6"
-  cluster       = "'{cluster}'"
-  engine        = "Distributed"
-  engine_params = ["'{cluster}'", clickhouse_db.test_db_clustered.db_name, clickhouse_table.replicated_table.table_name, "rand()"]
+  database = clickhouse_db.test_db_clustered.name
+  name     = "distributed_table"
+  cluster  = "'{cluster}'"
+  engine   = "Distributed"
+  engine_params = [
+    "'{cluster}'",
+    clickhouse_db.test_db_clustered.name,
+    clickhouse_table.replicated_table.name,
+  "rand()"]
 }
 
 
