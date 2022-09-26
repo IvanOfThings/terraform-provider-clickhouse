@@ -62,13 +62,13 @@ func New(version string) func() *schema.Provider {
 						return "", nil
 					},
 				},
-				"clickhouse_url": &schema.Schema{
+				"host": &schema.Schema{
 					Description: "Clickhouse server url",
 					Type:        schema.TypeString,
 					Required:    true,
 					Sensitive:   true,
 					DefaultFunc: func() (any, error) {
-						return getEnvVar("TF_CLICKHOUSE_URL")
+						return getEnvVar("TF_CLICKHOUSE_HOST")
 					},
 				},
 				"port": &schema.Schema{
@@ -108,7 +108,7 @@ func getEnvVar(envVarName string) (any, error) {
 func configure(version string, p *schema.Provider) func(context.Context, *schema.ResourceData) (any, diag.Diagnostics) {
 	return func(ctx context.Context, d *schema.ResourceData) (any, diag.Diagnostics) {
 
-		clickhouseUrl := d.Get("clickhouse_url").(string)
+		clickhouseUrl := d.Get("host").(string)
 		port := d.Get("port").(int)
 		username := d.Get("username").(string)
 		defaultCluster := d.Get("default_cluster").(string)

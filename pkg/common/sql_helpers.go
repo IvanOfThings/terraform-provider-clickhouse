@@ -123,7 +123,7 @@ func GetResourceNamesOnDataBases(conn *ch.Conn, databaseName string) (resources 
 func GetTables(conn *ch.Conn, data *CHDataBase, errors *[]error) []clickhouseTable {
 	var query string
 	if data != nil {
-		query = fmt.Sprintf("SELECT `database`, `name`, `engine_full`, `engine`, `comment` FROM system.tables where database = '%v' AND name = '%v'", data.Database, data.Table_name)
+		query = fmt.Sprintf("SELECT `database`, `name`, `engine_full`, `engine`, `comment` FROM system.tables where database = '%v' AND name = '%v'", data.Database, data.Name)
 	} else {
 		query = fmt.Sprintf("SELECT `database`, `name`, `engine_full`, `engine`, `comment` FROM system.tables")
 
@@ -140,14 +140,14 @@ func GetTables(conn *ch.Conn, data *CHDataBase, errors *[]error) []clickhouseTab
 		result := iter.Result
 
 		database := *toString(result, "database", errors)
-		name := *toString(result, "name", errors)
+		table_name := *toString(result, "name", errors)
 
 		var columns []clickhouseTablesColumn
-		columns = getColumns(conn, database, name, errors)
+		columns = getColumns(conn, database, table_name, errors)
 
 		table := clickhouseTable{
 			database:    database,
-			table_name:  name,
+			name:        table_name,
 			engine_full: *toString(result, "engine_full", errors),
 			engine:      *toString(result, "engine", errors),
 			comment:     *toString(result, "comment", errors),

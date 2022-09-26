@@ -20,7 +20,7 @@ Resource to manage tables
 - `database` (String) DB Name where the table will bellow
 - `engine` (String) Table engine type (Supported types so far: Distributed, ReplicatedReplacingMergeTree, ReplacingMergeTree)
 - `engine_params` (List of String) Engine params in case the engine type requires them
-- `table_name` (String) Table Name
+- `name` (String) Table Name
 
 ### Optional
 

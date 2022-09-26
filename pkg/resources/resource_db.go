@@ -26,7 +26,7 @@ func ResourceDb() *schema.Resource {
 				Optional:    true,
 				ForceNew:    true,
 			},
-			"db_name": &schema.Schema{
+			"name": &schema.Schema{
 				Description: "Database name",
 				Type:        schema.TypeString,
 				Required:    true,
@@ -70,8 +70,9 @@ func resourceDbRead(ctx context.Context, d *schema.ResourceData, meta any) diag.
 	conn := client.ClickhouseConnection
 	defaultCluster := client.DefaultCluster
 
-	database_name := d.Get("db_name").(string)
+	database_name := d.Get("name").(string)
 	iter, err := conn.Fetch(fmt.Sprintf("SELECT name, engine, data_path, metadata_path, uuid, comment FROM system.databases where name = '%v'", database_name))
+
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -85,6 +86,15 @@ func resourceDbRead(ctx context.Context, d *schema.ResourceData, meta any) diag.
 	metadata_path, _ := result.String("metadata_path")
 	uuid, _ := result.String("uuid")
 
+	if name == "" {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("Database %v not found", database_name),
+			Detail:   "Not possible to retrieve db from server. Could you be performing operation in a cluster? If so try configuring default cluster name on you provider configuration.",
+		})
+		return diags
+	}
+
 	storedComment, _ := result.String("comment")
 	comment, cluster, err := common.UnmarshalComment(storedComment)
 	if err != nil {
@@ -96,7 +106,7 @@ func resourceDbRead(ctx context.Context, d *schema.ResourceData, meta any) diag.
 		comment, cluster = storedComment, defaultCluster
 	}
 
-	d.Set("db_name", name)
+	d.Set("name", name)
 	d.Set("engine", engine)
 	d.Set("data_path", data_path)
 	d.Set("metadata_path", metadata_path)
@@ -121,10 +131,16 @@ func resourceDbCreate(ctx context.Context, d *schema.ResourceData, meta any) dia
 
 	clusterStatement, clusterToUse := common.GetClusterStatement(cluster, client.DefaultCluster)
 
-	database_name := d.Get("db_name").(string)
+	database_name := d.Get("name").(string)
 	comment := d.Get("comment").(string)
 
 	query := fmt.Sprintf("CREATE DATABASE %v %v COMMENT '%v'", database_name, clusterStatement, common.GetComment(comment, cluster))
+
+	// diags = append(diags, diag.Diagnostic{
+	// 	Severity: diag.Warning,
+	// 	Summary:  fmt.Sprintf("Query"),
+	// 	Detail:   fmt.Sprintf("Query %q", query),
+	// })
 
 	err := conn.Exec(query)
 	if err != nil {
@@ -142,9 +158,25 @@ func resourceDbDelete(ctx context.Context, d *schema.ResourceData, meta any) dia
 	var diags diag.Diagnostics
 	conn := client.ClickhouseConnection
 
-	database_name := d.Get("db_name").(string)
+	database_name := d.Get("name").(string)
+
+	if database_name == "" {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Database name not found",
+			Detail:   "Not possible to destroy resource as the database name was not retrieved succesfully. Could you be performing operation in a cluster? If so try configuring default cluster name on you provider configuration.",
+		})
+		return diags
+	}
 
 	dbResources, errors := common.GetResourceNamesOnDataBases(conn, database_name)
+
+	// diags = append(diags, diag.Diagnostic{
+	// 	Severity: diag.Warning,
+	// 	Summary:  fmt.Sprintf("database_name"),
+	// 	Detail:   fmt.Sprintf("database_name %q", database_name),
+	// })
+
 	if len(errors) > 0 {
 		return diag.FromErr(errors[0])
 	}
@@ -160,7 +192,14 @@ func resourceDbDelete(ctx context.Context, d *schema.ResourceData, meta any) dia
 	cluster, _ := d.Get("cluster").(string)
 	clusterStatement, _ := common.GetClusterStatement(cluster, client.DefaultCluster)
 
-	err := conn.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %v %v SYNC", database_name, clusterStatement))
+	query := fmt.Sprintf("DROP DATABASE %v %v SYNC", database_name, clusterStatement)
+
+	// diags = append(diags, diag.Diagnostic{
+	// 	Severity: diag.Warning,
+	// 	Summary:  fmt.Sprintf("Query"),
+	// 	Detail:   fmt.Sprintf("Query %q", query),
+	// })
+	err := conn.Exec(query)
 	if err != nil {
 		return diag.FromErr(err)
 	}

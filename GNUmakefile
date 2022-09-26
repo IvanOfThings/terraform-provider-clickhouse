@@ -1,9 +1,9 @@
 TEST?=$$(go list ./... | grep -v 'vendor')
 HOSTNAME=hashicorp.com
-NAMESPACE=edu
+NAMESPACE=ivanofthings
 NAME=clickhouse
 BINARY=terraform-provider-${NAME}
-VERSION=0.1.0
+VERSION=2.0.0
 OS_ARCH=linux_amd64
 
 default: testacc
@@ -11,7 +11,7 @@ default: testacc
 # Run acceptance tests
 .PHONY: testacc
 testacc:
-	TF_ACC=1 TF_CLICKHOUSE_URL="127.0.0.1" TF_CLICKHOUSE_USERNAME="default" TF_CLICKHOUSE_PASSWORD="" TF_CLICKHOUSE_PORT=8923 go test -tags testing ./... -v $(TESTARGS) -timeout 120m
+	TF_ACC=1 TF_CLICKHOUSE_HOST="127.0.0.1" TF_CLICKHOUSE_USERNAME="default" TF_CLICKHOUSE_PASSWORD="" TF_CLICKHOUSE_PORT=8923 go test -tags testing ./... -v $(TESTARGS) -timeout 120m
 
 build:
 	go build -o ${BINARY}

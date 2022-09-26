@@ -30,7 +30,7 @@ func ResourceTable() *schema.Resource {
 				Optional:    true,
 				ForceNew:    true,
 			},
-			"table_name": &schema.Schema{
+			"name": &schema.Schema{
 				Description: "Table Name",
 				Type:        schema.TypeString,
 				Required:    true,
@@ -127,7 +127,7 @@ func resourceTableRead(ctx context.Context, d *schema.ResourceData, meta any) di
 	conn := client.ClickhouseConnection
 
 	database := d.Get("database").(string)
-	table_name := d.Get("table_name").(string)
+	table_name := d.Get("name").(string)
 	columns := d.Get("column").([]interface{})
 	order_by := common.MapArrayInterfaceToArrayOfStrings(d.Get("order_by").([]interface{}))
 	mappedColumns := common.MapColumns(columns)
@@ -141,8 +141,8 @@ func resourceTableRead(ctx context.Context, d *schema.ResourceData, meta any) di
 	}
 
 	data := common.CHDataBase{
-		Database:   database,
-		Table_name: table_name,
+		Database: database,
+		Name:     table_name,
 	}
 
 	errors := make([]error, 0)
@@ -163,7 +163,7 @@ func resourceTableRead(ctx context.Context, d *schema.ResourceData, meta any) di
 	if err := d.Set("database", &table.Database); err != nil {
 		return diag.FromErr(err)
 	}
-	if err := d.Set("table_name", &table.Table_name); err != nil {
+	if err := d.Set("name", &table.Name); err != nil {
 		return diag.FromErr(err)
 	}
 	if err := d.Set("engine", &table.Engine); err != nil {
@@ -194,7 +194,7 @@ func resourceTableCreate(ctx context.Context, d *schema.ResourceData, meta any) 
 
 	cluster := d.Get("cluster").(string)
 	database := d.Get("database").(string)
-	table_name := d.Get("table_name").(string)
+	table_name := d.Get("name").(string)
 	columns := d.Get("column").([]interface{})
 	engine := d.Get("engine").(string)
 	comment := d.Get("comment").(string)
@@ -233,11 +233,11 @@ func resourceTableDelete(ctx context.Context, d *schema.ResourceData, meta any) 
 	conn := client.ClickhouseConnection
 
 	database := d.Get("database").(string)
-	table_name := d.Get("table_name").(string)
+	table_name := d.Get("name").(string)
 	cluster := d.Get("cluster").(string)
 	clusterStatement, _ := common.GetClusterStatement(cluster, client.DefaultCluster)
 
-	err := conn.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %v.%v "+clusterStatement, database, table_name))
+	err := conn.Exec(fmt.Sprintf("DROP TABLE %v.%v "+clusterStatement, database, table_name))
 
 	if err != nil {
 		return diag.FromErr(err)

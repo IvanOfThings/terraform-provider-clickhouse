@@ -45,7 +45,7 @@ Definining provider
 ```hcl
 provider "clickhouse" {
   port           = 8123
-  clickhouse_url = "127.0.0.1"
+  host           = "127.0.0.1"
   username       = "default"
   password       = ""
 }
@@ -56,13 +56,13 @@ In order to definte url, username and password in a safety way it is possible to
 ```config
 TF_CLICKHOUSE_USERNAME=default
 TF_CLICKHOUSE_PASSWORD=""
-TF_CLICKHOUSE_URL="127.0.0.1"
+TF_CLICKHOUSE_HOST="127.0.0.1"
 TF_CLICKHOUSE_PORT=8123
 ```
 
 ```hcl
 resource "clickhouse_db" "test_db_clusterd" {
-  db_name = "database_test_clustered"
+  name = "database_test_clustered"
   comment = "This is a test database"
 }
 ```
@@ -74,7 +74,7 @@ Configuring provider
 ```hcl
 provider "clickhouse" {
   port           = 8923
-  clickhouse_url = "127.0.0.1"
+  host           = "127.0.0.1"
   username       = "default"
   password       = ""
   default_cluster ="cluster"
@@ -85,7 +85,7 @@ Creating a Database
 
 ```hcl
 resource "clickhouse_db" "test_db_clusterd" {
-  db_name = "database_test_clustered"
+  name = "database_test_clustered"
   comment = "This is a test database"
   cluster = "cluster"
 }
@@ -98,7 +98,7 @@ I is possible to use macros defined for cluster, databases, installation names i
 ```hcl
 provider "clickhouse" {
   port           = 8123
-  clickhouse_url = "127.0.0.1"
+  host           = "127.0.0.1"
   username       = "default"
   password       = ""
   default_cluster ="'{cluster}'"
@@ -107,7 +107,7 @@ provider "clickhouse" {
 
 ```hcl
 resource "clickhouse_db" "test_db_clusterd" {
-  db_name = "database_test_clustered"
+  name = "database_test_clustered"
   comment = "This is a test database"
   cluster = "'{cluster}'"
 }
@@ -117,8 +117,8 @@ Creating tables
 
 ```hcl
 resource "clickhouse_table" "replicated_table" {
-  database      = clickhouse_db.test_db_clustered.db_name
-  table_name    = "replicated_table"
+  database      = clickhouse_db.test_db_clustered.name
+  name    = "replicated_table"
   cluster       = clickhouse_db.test_db_clustered.cluster
   engine        = "ReplicatedMergeTree"
   engine_params = ["'/clickhouse/{installation}/clickhouse_db.test_db_clustered.cluster/tables/{shard}/{database}/{table}'", "'{replica}'"]
@@ -150,11 +150,11 @@ resource "clickhouse_table" "replicated_table" {
 
 
 resource "clickhouse_table" "distributed_table" {
-  database      = clickhouse_db.test_db_clustered.db_name
-  table_name    = "distributed_table"
+  database      = clickhouse_db.test_db_clustered.name
+  name    = "distributed_table"
   cluster       = clickhouse_db.test_db_clustered.cluster
   engine        = "Distributed"
-  engine_params = [clickhouse_db.test_db_clustered.cluster, clickhouse_db.test_db_clustered.db_name, clickhouse_table.replicated_table.table_name, "rand()"]
+  engine_params = [clickhouse_db.test_db_clustered.cluster, clickhouse_db.test_db_clustered.name, clickhouse_table.replicated_table.name, "rand()"]
 }
 ```
 

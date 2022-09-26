@@ -17,7 +17,7 @@ Resource to handle clickhouse databases.
 
 ### Required
 
-- `db_name` (String) Database name
+- `name` (String) Database name
 
 ### Optional
 

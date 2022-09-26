@@ -27,7 +27,7 @@ Read-Only:
 
 - `comment` (String)
 - `data_path` (String)
-- `db_name` (String)
+- `name` (String)
 - `engine` (String)
 - `metadata_path` (String)
 - `uuid` (String)

@@ -84,7 +84,7 @@ func MapTableToDatasource(table clickhouseTable) (*DataSourceCHTable, error) {
 
 	return &DataSourceCHTable{
 		Database:      table.database,
-		Table_name:    table.table_name,
+		Name:          table.name,
 		Engine_full:   table.engine_full,
 		Engine:        table.engine,
 		Cluster:       &cluster,
