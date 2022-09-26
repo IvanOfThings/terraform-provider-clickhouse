@@ -1,0 +1,15 @@
+# Based on https://github.com/leonsteinhaeuser/project-beta-automations
+
+name: "Add Issues/PRs to TF Provider DevEx team board"
+
+on:
+  pull_request:
+    branches: [master]
+
+jobs:
+  add-content-to-project:
+    name: "Add Content to project"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Release with semantic-release"
+        run: npx semantic-release
