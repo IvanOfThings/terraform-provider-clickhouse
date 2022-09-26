@@ -7,9 +7,10 @@ on:
     branches: [master]
 
 jobs:
-  add-content-to-project:
+  merge-content-to-project:
     name: "Add Content to project"
     runs-on: ubuntu-latest
+    environment: releasing-env
     
     steps:
       - name: Check out code into the Go module directory
@@ -17,3 +18,6 @@ jobs:
       
       - name: "Release with semantic-release"
         run: npx semantic-release --debug
+        env:
+          # GitHub sets this automatically
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
