@@ -16,8 +16,8 @@ description: |-
 terraform {
   required_providers {
     clickhouse = {
-      version = "0.1.0"
-      source  = "hashicorp.com/edu/clickhouse"
+      version = "2.0.0"
+      source  = "hashicorp.com/ivanofthings/clickhouse"
     }
   }
 }
@@ -36,8 +36,8 @@ provider "clickhouse" {
 
 ### Optional
 
-- `clickhouse_url` (String, Sensitive) Clickhouse server url
 - `default_cluster` (String) Default cluster, if provided will be used when no cluster is provided
+- `host` (String, Sensitive) Clickhouse server url
 - `password` (String, Sensitive) Clickhouse user password with admin privileges
 - `port` (Number) Clickhouse server port
 - `username` (String) Clickhouse username with admin privileges
