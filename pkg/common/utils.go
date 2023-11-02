@@ -36,7 +36,7 @@ func UnmarshalComment(storedComment string) (comment string, cluster string, err
 	return comment, cluster, err
 }
 
-func toString(result ch.Result, field string, errors *[]error) *string {
+func ToString(result ch.Result, field string, errors *[]error) *string {
 
 	value, err := result.String(field)
 	if err != nil {
@@ -77,4 +77,13 @@ func GetClusterStatement(cluster string, defaultCluster string) (clusterStatemen
 		clusterStatement = "ON CLUSTER " + clusterToUse
 	}
 	return clusterStatement, clusterToUse
+}
+
+// Quote all strings on a string slice
+func Quote(elems []string) []string {
+	var quotedElems []string
+	for _, elem := range elems {
+		quotedElems = append(quotedElems, fmt.Sprintf("%q", elem))
+	}
+	return quotedElems
 }

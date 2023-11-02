@@ -1,4 +1,4 @@
-package resources
+package table
 
 import (
 	"context"

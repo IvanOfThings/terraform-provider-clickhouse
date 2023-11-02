@@ -1,4 +1,4 @@
-package resources_test
+package db_test
 
 import (
 	"fmt"

@@ -1,5 +1,3 @@
-//go:build testing
-
 package testutils
 
 import (
@@ -28,3 +26,12 @@ func TestAccPreCheck(t *testing.T) {
 	// about the appropriate environment variables being set are common to see in a pre-check
 	// function.
 }
+
+//func ClickhouseProviderFactory() (*schema.Provider, error) {
+//	TestAccProvider = provider.New("dev")()
+//	return TestAccProvider, nil
+//}
+//
+//func GetProviderFactories() map[string]func() (*schema.Provider, error) {
+//	return map[string]func() (*schema.Provider, error){"clickhouse": ClickhouseProviderFactory}
+//}

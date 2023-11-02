@@ -1,4 +1,4 @@
-package resources_test
+package table_test
 
 import (
 	"regexp"
