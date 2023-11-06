@@ -1,4 +1,4 @@
-package role_test
+package resourcerole_test
 
 import (
 	"fmt"
@@ -73,19 +73,19 @@ var testStepsData = []TestStepData{
 		// Check all allowed privileges
 		roleName:   roleName1,
 		database:   databaseName1,
-		privileges: role.AllowedPrivileges,
+		privileges: resourcerole.AllowedPrivileges,
 	},
 	{
 		// Change role name
 		roleName:   roleName2,
 		database:   databaseName1,
-		privileges: role.AllowedPrivileges,
+		privileges: resourcerole.AllowedPrivileges,
 	},
 	{
 		// Change role name and db
 		roleName:   roleName1,
 		database:   databaseName2,
-		privileges: role.AllowedPrivileges,
+		privileges: resourcerole.AllowedPrivileges,
 	},
 	{
 		// Change role name, db and privileges
@@ -200,7 +200,7 @@ func testAccCheckRoleResourceExists(roleName string, database string, privileges
 	return func(state *terraform.State) error {
 		client := testutils.TestAccProvider.Meta().(*common.ApiClient)
 		conn := client.ClickhouseConnection
-		chRoleService := role.CHRoleService{CHConnection: conn}
+		chRoleService := resourcerole.CHRoleService{CHConnection: conn}
 
 		dbRole, err := chRoleService.GetRole(roleName)
 
@@ -216,7 +216,7 @@ func testAccCheckRoleResourceExists(roleName string, database string, privileges
 		}
 
 		for _, privilege := range privileges {
-			var matchedDbRolePrivilege *role.CHGrant
+			var matchedDbRolePrivilege *resourcerole.CHGrant
 			for _, dbRolePrivilege := range dbRole.Privileges {
 				if privilege == dbRolePrivilege.AccessType {
 					matchedDbRolePrivilege = &dbRolePrivilege
@@ -240,7 +240,7 @@ func testAccCheckRoleResourceDestroy(roleNames []string) resource.TestCheckFunc 
 		for _, roleName := range roleNames {
 			client := testutils.TestAccProvider.Meta().(*common.ApiClient)
 			conn := client.ClickhouseConnection
-			chRoleService := role.CHRoleService{CHConnection: conn}
+			chRoleService := resourcerole.CHRoleService{CHConnection: conn}
 
 			dbRole, err := chRoleService.GetRole(roleName)
 

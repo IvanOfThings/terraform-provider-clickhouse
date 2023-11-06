@@ -1,4 +1,4 @@
-package user
+package resourceuser
 
 import (
 	"encoding/json"

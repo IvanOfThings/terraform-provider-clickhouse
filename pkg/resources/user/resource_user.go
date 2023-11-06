@@ -1,4 +1,4 @@
-package user
+package resourceuser
 
 import (
 	"context"
@@ -34,11 +34,6 @@ func ResourceUser() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			//"profile": &schema.Schema{
-			//	Description: "Order by columns to use as sorting key",
-			//	Type:        schema.TypeString,
-			//	Optional:    true,
-			//},
 		},
 	}
 }

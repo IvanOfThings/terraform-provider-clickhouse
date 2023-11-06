@@ -1,4 +1,4 @@
-package user_test
+package resourceuser_test
 
 import (
 	"fmt"
@@ -156,7 +156,7 @@ func testAccCheckUserResourceExists(userName string, roles []string) resource.Te
 	return func(state *terraform.State) error {
 		client := testutils.TestAccProvider.Meta().(*common.ApiClient)
 		conn := client.ClickhouseConnection
-		chUserService := user.CHUserService{CHConnection: conn}
+		chUserService := resourceuser.CHUserService{CHConnection: conn}
 
 		dbUser, err := chUserService.GetUser(userName)
 		if err != nil {
@@ -190,7 +190,7 @@ func testAccCheckUserResourceDestroy(userNames []string) resource.TestCheckFunc 
 		for _, userName := range userNames {
 			client := testutils.TestAccProvider.Meta().(*common.ApiClient)
 			conn := client.ClickhouseConnection
-			chUserService := user.CHUserService{CHConnection: conn}
+			chUserService := resourceuser.CHUserService{CHConnection: conn}
 			dbRole, err := chUserService.GetUser(userName)
 
 			if err != nil {

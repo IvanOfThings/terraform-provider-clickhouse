@@ -87,10 +87,10 @@ func New(version string) func() *schema.Provider {
 				"clickhouse_dbs": datasources.DataSourceDbs(),
 			},
 			ResourcesMap: map[string]*schema.Resource{
-				"clickhouse_db":    db.ResourceDb(),
-				"clickhouse_table": table.ResourceTable(),
-				"clickhouse_role":  role.ResourceRole(),
-				"clickhouse_user":  user.ResourceUser(),
+				"clickhouse_db":    resourcedb.ResourceDb(),
+				"clickhouse_table": resourcetable.ResourceTable(),
+				"clickhouse_role":  resourcerole.ResourceRole(),
+				"clickhouse_user":  resourceuser.ResourceUser(),
 			},
 			ConfigureContextFunc: configure(),
 		}

@@ -1,4 +1,4 @@
-package role
+package resourcerole
 
 import (
 	"context"
