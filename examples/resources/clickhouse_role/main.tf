@@ -9,9 +9,6 @@ terraform {
 
 provider "clickhouse" {
   port     = 8123
-  host     = "127.0.0.1"
-  username = "root"
-  password = "root"
 }
 
 resource "clickhouse_db" "awesome_database" {
