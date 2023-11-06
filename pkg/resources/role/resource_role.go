@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/common"
-	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/model"
-	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/services"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -56,8 +54,8 @@ func resourceRoleUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 		return diags
 	}
 
-	chRoleService := services.CHRoleService{CHConnection: conn}
-	chRole, err := chRoleService.UpdateRole(model.RoleResource{Name: planRoleName, Database: planDatabase, Privileges: planPrivileges}, d)
+	chRoleService := CHRoleService{CHConnection: conn}
+	chRole, err := chRoleService.UpdateRole(RoleResource{Name: planRoleName, Database: planDatabase, Privileges: planPrivileges}, d)
 
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("resource role update: %v", err))
@@ -73,7 +71,7 @@ func resourceRoleRead(ctx context.Context, d *schema.ResourceData, meta any) dia
 
 	client := meta.(*common.ApiClient)
 	conn := client.ClickhouseConnection
-	chRoleService := services.CHRoleService{CHConnection: conn}
+	chRoleService := CHRoleService{CHConnection: conn}
 
 	roleNameState := d.Get("name").(string)
 	chRole, err := chRoleService.GetRole(roleNameState)
@@ -115,7 +113,7 @@ func resourceRoleCreate(ctx context.Context, d *schema.ResourceData, meta any) d
 		return diags
 	}
 
-	chRoleService := services.CHRoleService{CHConnection: conn}
+	chRoleService := CHRoleService{CHConnection: conn}
 	chRole, err := chRoleService.CreateRole(roleName, database, common.StringSetToList(privileges))
 
 	if err != nil {
@@ -133,7 +131,7 @@ func resourceRoleDelete(ctx context.Context, d *schema.ResourceData, meta any) d
 	conn := client.ClickhouseConnection
 
 	roleName := d.Get("name").(string)
-	chRoleService := services.CHRoleService{CHConnection: conn}
+	chRoleService := CHRoleService{CHConnection: conn}
 
 	if err := chRoleService.DeleteRole(roleName); err != nil {
 		return diag.FromErr(fmt.Errorf("resource role delete: %v", err))

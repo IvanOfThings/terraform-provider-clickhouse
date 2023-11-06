@@ -1,4 +1,4 @@
-package model
+package user
 
 import (
 	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/common"

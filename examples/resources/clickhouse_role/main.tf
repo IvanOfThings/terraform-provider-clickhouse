@@ -8,7 +8,7 @@ terraform {
 }
 
 provider "clickhouse" {
-  port     = 8123
+  port = 8123
 }
 
 resource "clickhouse_db" "awesome_database" {

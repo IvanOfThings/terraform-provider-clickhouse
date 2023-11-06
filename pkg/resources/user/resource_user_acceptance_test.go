@@ -3,7 +3,8 @@ package user_test
 import (
 	"fmt"
 	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/common"
-	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/services"
+	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/resources/role"
+	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/resources/user"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"regexp"
 	"strings"
@@ -156,7 +157,7 @@ func testAccCheckUserResourceExists(userName string, roles []string) resource.Te
 	return func(state *terraform.State) error {
 		client := testutils.TestAccProvider.Meta().(*common.ApiClient)
 		conn := client.ClickhouseConnection
-		chUserService := services.CHUserService{CHConnection: conn}
+		chUserService := user.CHUserService{CHConnection: conn}
 
 		dbUser, err := chUserService.GetUser(userName)
 		if err != nil {
@@ -190,7 +191,7 @@ func testAccCheckRoleResourceDestroy(roleNames []string) resource.TestCheckFunc 
 		for _, roleName := range roleNames {
 			client := testutils.TestAccProvider.Meta().(*common.ApiClient)
 			conn := client.ClickhouseConnection
-			chRoleService := services.CHRoleService{CHConnection: conn}
+			chRoleService := role.CHRoleService{CHConnection: conn}
 			dbRole, err := chRoleService.GetRole(roleName)
 
 			if err != nil {

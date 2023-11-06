@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/common"
-	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/model"
-	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/services"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -50,7 +48,7 @@ func resourceUserRead(ctx context.Context, d *schema.ResourceData, meta any) dia
 
 	client := meta.(*common.ApiClient)
 	conn := client.ClickhouseConnection
-	chUserService := services.CHUserService{CHConnection: conn}
+	chUserService := CHUserService{CHConnection: conn}
 
 	userName := d.Get("name").(string)
 	user, err := chUserService.GetUser(userName)
@@ -78,8 +76,8 @@ func resourceUserCreate(ctx context.Context, d *schema.ResourceData, meta any) d
 	userName := d.Get("name").(string)
 	password := d.Get("password").(string)
 	rolesSet := d.Get("roles").(*schema.Set)
-	chUserService := services.CHUserService{CHConnection: conn}
-	chUser, err := chUserService.CreateUser(model.UserResource{
+	chUserService := CHUserService{CHConnection: conn}
+	chUser, err := chUserService.CreateUser(UserResource{
 		Name:     userName,
 		Password: password,
 		Roles:    rolesSet,
@@ -98,14 +96,14 @@ func resourceUserUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 
 	client := meta.(*common.ApiClient)
 	conn := client.ClickhouseConnection
-	chUserService := services.CHUserService{CHConnection: conn}
+	chUserService := CHUserService{CHConnection: conn}
 
 	planUserName := d.Get("name").(string)
 	planPassword := d.Get("password").(string)
 	planRoles := d.Get("roles").(*schema.Set)
 
 	// After modify original role grants, we need to update default roles
-	chUser, err := chUserService.UpdateUser(model.UserResource{
+	chUser, err := chUserService.UpdateUser(UserResource{
 		Name:     planUserName,
 		Password: planPassword,
 		Roles:    planRoles,

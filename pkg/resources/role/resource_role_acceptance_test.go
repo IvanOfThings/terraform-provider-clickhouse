@@ -3,9 +3,7 @@ package role_test
 import (
 	"fmt"
 	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/common"
-	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/model"
 	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/resources/role"
-	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/services"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"regexp"
 	"strings"
@@ -202,7 +200,7 @@ func testAccCheckRoleResourceExists(roleName string, database string, privileges
 	return func(state *terraform.State) error {
 		client := testutils.TestAccProvider.Meta().(*common.ApiClient)
 		conn := client.ClickhouseConnection
-		chRoleService := services.CHRoleService{CHConnection: conn}
+		chRoleService := role.CHRoleService{CHConnection: conn}
 
 		dbRole, err := chRoleService.GetRole(roleName)
 
@@ -218,7 +216,7 @@ func testAccCheckRoleResourceExists(roleName string, database string, privileges
 		}
 
 		for _, privilege := range privileges {
-			var matchedDbRolePrivilege *model.CHGrant
+			var matchedDbRolePrivilege *role.CHGrant
 			for _, dbRolePrivilege := range dbRole.Privileges {
 				if privilege == dbRolePrivilege.AccessType {
 					matchedDbRolePrivilege = &dbRolePrivilege
@@ -242,7 +240,7 @@ func testAccCheckRoleResourceDestroy(roleNames []string) resource.TestCheckFunc 
 		for _, roleName := range roleNames {
 			client := testutils.TestAccProvider.Meta().(*common.ApiClient)
 			conn := client.ClickhouseConnection
-			chRoleService := services.CHRoleService{CHConnection: conn}
+			chRoleService := role.CHRoleService{CHConnection: conn}
 
 			dbRole, err := chRoleService.GetRole(roleName)
 

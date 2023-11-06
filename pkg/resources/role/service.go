@@ -1,8 +1,7 @@
-package services
+package role
 
 import (
 	"fmt"
-	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/model"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	ch "github.com/leprosus/golang-clickhouse"
 	"strings"
@@ -12,7 +11,7 @@ type CHRoleService struct {
 	CHConnection *ch.Conn
 }
 
-func (rs *CHRoleService) getRoleGrants(roleName string) ([]model.CHGrant, error) {
+func (rs *CHRoleService) getRoleGrants(roleName string) ([]CHGrant, error) {
 	query := fmt.Sprintf("SELECT role_name, access_type, database, table, column FROM system.grants WHERE role_name = '%s'", roleName)
 	grantsIt, err := rs.CHConnection.Fetch(query)
 
@@ -20,7 +19,7 @@ func (rs *CHRoleService) getRoleGrants(roleName string) ([]model.CHGrant, error)
 		return nil, fmt.Errorf("error fetching role grants: %s", err)
 	}
 
-	var privileges []model.CHGrant
+	var privileges []CHGrant
 
 	for i := 0; grantsIt.Next(); i++ {
 		result := grantsIt.Result
@@ -38,7 +37,7 @@ func (rs *CHRoleService) getRoleGrants(roleName string) ([]model.CHGrant, error)
 			return nil, fmt.Errorf("error retrieving role 'database': %s", err)
 		}
 
-		privilege := model.CHGrant{
+		privilege := CHGrant{
 			RoleName:   roleName,
 			Database:   database,
 			AccessType: accessType,
@@ -50,7 +49,7 @@ func (rs *CHRoleService) getRoleGrants(roleName string) ([]model.CHGrant, error)
 	return privileges, nil
 }
 
-func (rs *CHRoleService) GetRole(roleName string) (*model.CHRole, error) {
+func (rs *CHRoleService) GetRole(roleName string) (*CHRole, error) {
 	roleQuery := fmt.Sprintf("SELECT name FROM system.roles WHERE name = '%s'", roleName)
 
 	roleIt, err := rs.CHConnection.Fetch(roleQuery)
@@ -66,13 +65,13 @@ func (rs *CHRoleService) GetRole(roleName string) (*model.CHRole, error) {
 		return nil, fmt.Errorf("error fetching role grants: %s", err)
 	}
 
-	return &model.CHRole{
+	return &CHRole{
 		Name:       roleName,
 		Privileges: privileges,
 	}, nil
 }
 
-func (rs *CHRoleService) UpdateRole(rolePlan model.RoleResource, resourceData *schema.ResourceData) (*model.CHRole, error) {
+func (rs *CHRoleService) UpdateRole(rolePlan RoleResource, resourceData *schema.ResourceData) (*CHRole, error) {
 	stateRoleName, _ := resourceData.GetChange("name")
 	chRole, err := rs.GetRole(stateRoleName.(string))
 	if err != nil {
@@ -149,13 +148,13 @@ func (rs *CHRoleService) UpdateRole(rolePlan model.RoleResource, resourceData *s
 	return rs.GetRole(rolePlan.Name)
 }
 
-func (rs *CHRoleService) CreateRole(name string, database string, privileges []string) (*model.CHRole, error) {
+func (rs *CHRoleService) CreateRole(name string, database string, privileges []string) (*CHRole, error) {
 	err := rs.CHConnection.Exec(fmt.Sprintf("CREATE ROLE %s", name))
 	if err != nil {
 		return nil, fmt.Errorf("error creating role: %s", err)
 	}
 
-	var chPrivileges []model.CHGrant
+	var chPrivileges []CHGrant
 
 	for _, privilege := range privileges {
 		err = rs.CHConnection.Exec(fmt.Sprintf("GRANT %s ON %s.* TO %s", privilege, database, name))
@@ -167,9 +166,9 @@ func (rs *CHRoleService) CreateRole(name string, database string, privileges []s
 			}
 			return nil, fmt.Errorf("error creating role: %s", err)
 		}
-		chPrivileges = append(chPrivileges, model.CHGrant{RoleName: name, AccessType: privilege, Database: database})
+		chPrivileges = append(chPrivileges, CHGrant{RoleName: name, AccessType: privilege, Database: database})
 	}
-	return &model.CHRole{Name: name, Privileges: chPrivileges}, nil
+	return &CHRole{Name: name, Privileges: chPrivileges}, nil
 }
 
 func (rs *CHRoleService) DeleteRole(name string) error {

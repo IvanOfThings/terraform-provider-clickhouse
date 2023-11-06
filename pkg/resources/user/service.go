@@ -1,10 +1,9 @@
-package services
+package user
 
 import (
 	"encoding/json"
 	"fmt"
 	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/common"
-	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/model"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	ch "github.com/leprosus/golang-clickhouse"
 	"strings"
@@ -14,7 +13,7 @@ type CHUserService struct {
 	CHConnection *ch.Conn
 }
 
-func (us *CHUserService) GetUser(userName string) (*model.CHUser, error) {
+func (us *CHUserService) GetUser(userName string) (*CHUser, error) {
 	roleQuery := fmt.Sprintf("SELECT name, default_roles_list FROM system.users WHERE name = '%s'", userName)
 
 	roleIt, err := us.CHConnection.Fetch(roleQuery)
@@ -39,13 +38,13 @@ func (us *CHUserService) GetUser(userName string) (*model.CHUser, error) {
 		return nil, fmt.Errorf("error unmarshalling user 'default_roles_list': %s", err)
 	}
 
-	return &model.CHUser{
+	return &CHUser{
 		Name:  name,
 		Roles: rolesList,
 	}, nil
 }
 
-func (us *CHUserService) CreateUser(userPlan model.UserResource) (*model.CHUser, error) {
+func (us *CHUserService) CreateUser(userPlan UserResource) (*CHUser, error) {
 	var rolesList []string
 
 	for _, role := range userPlan.Roles.List() {
@@ -67,7 +66,7 @@ func (us *CHUserService) CreateUser(userPlan model.UserResource) (*model.CHUser,
 	return us.GetUser(userPlan.Name)
 }
 
-func (us *CHUserService) UpdateUser(userPlan model.UserResource, resourceData *schema.ResourceData) (*model.CHUser, error) {
+func (us *CHUserService) UpdateUser(userPlan UserResource, resourceData *schema.ResourceData) (*CHUser, error) {
 	stateUserName, _ := resourceData.GetChange("name")
 	user, err := us.GetUser(stateUserName.(string))
 	if err != nil {
