@@ -3,7 +3,6 @@ package user_test
 import (
 	"fmt"
 	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/common"
-	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/resources/role"
 	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/resources/user"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"regexp"
@@ -22,13 +21,13 @@ type TestStepData struct {
 
 const userResourceName = "test_user"
 const userResource = "clickhouse_user." + userResourceName
-const password1 = "test_password_1"
-const password2 = "test_password_2"
+const password1 = "test_user_password_1"
+const password2 = "test_user_password_2"
 const userName1 = "test_user_1"
 const userName2 = "test_user_2"
-const roleName1 = "test_role_1"
-const roleName2 = "test_role_2"
-const roleName3 = "test_role_3"
+const roleName1 = "test_user_role_1"
+const roleName2 = "test_user_role_2"
+const roleName3 = "test_user_role_3"
 
 var testStepsData = []TestStepData{
 	{
@@ -109,30 +108,30 @@ func TestAccResourceRole(t *testing.T) {
 	// Feature tests
 	resource.Test(t, resource.TestCase{
 		Providers:    testutils.Provider(),
-		CheckDestroy: testAccCheckRoleResourceDestroy([]string{userName1, userName2}),
+		CheckDestroy: testAccCheckUserResourceDestroy([]string{userName1, userName2}),
 		Steps:        generateTestSteps(),
 	})
 }
 
 func testAccUserResource(userName string, password string, roles []string) string {
 	databaseResource := fmt.Sprintf(`
-	resource "clickhouse_db" "test_db" {
-		name = "test_db"
+	resource "clickhouse_db" "test_user_db" {
+		name = "test_user_db"
 		comment = "db comment"
 	}
 	resource "clickhouse_role" "%[1]s" {
 		name = "%[1]s"
-		database = clickhouse_db.test_db.name
+		database = clickhouse_db.test_user_db.name
 		privileges = ["INSERT"]
 	}
 	resource "clickhouse_role" "%[2]s" {
 		name = "%[2]s"
-		database = clickhouse_db.test_db.name
+		database = clickhouse_db.test_user_db.name
 		privileges = ["SELECT"]
 	}
 	resource "clickhouse_role" "%[3]s" {
 		name = "%[3]s"
-		database = clickhouse_db.test_db.name
+		database = clickhouse_db.test_user_db.name
 		privileges = ["SELECT"]
 	}
 `, roleName1, roleName2, roleName3)
@@ -186,20 +185,20 @@ func testAccCheckUserResourceExists(userName string, roles []string) resource.Te
 	}
 }
 
-func testAccCheckRoleResourceDestroy(roleNames []string) resource.TestCheckFunc {
+func testAccCheckUserResourceDestroy(userNames []string) resource.TestCheckFunc {
 	return func(state *terraform.State) error {
-		for _, roleName := range roleNames {
+		for _, userName := range userNames {
 			client := testutils.TestAccProvider.Meta().(*common.ApiClient)
 			conn := client.ClickhouseConnection
-			chRoleService := role.CHRoleService{CHConnection: conn}
-			dbRole, err := chRoleService.GetRole(roleName)
+			chUserService := user.CHUserService{CHConnection: conn}
+			dbRole, err := chUserService.GetUser(userName)
 
 			if err != nil {
-				return fmt.Errorf("get role: %v", err)
+				return fmt.Errorf("get user: %v", err)
 			}
 
 			if dbRole != nil {
-				return fmt.Errorf("role %s hasn't been deleted", roleName)
+				return fmt.Errorf("user %s hasn't been deleted", userName)
 			}
 		}
 		return nil

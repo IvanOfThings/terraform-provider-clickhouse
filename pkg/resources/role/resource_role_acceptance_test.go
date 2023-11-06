@@ -23,8 +23,8 @@ const roleResourceName = "test_role"
 const roleResource = "clickhouse_role." + roleResourceName
 const roleName1 = "test_role_1"
 const roleName2 = "test_role_2"
-const databaseName1 = "role_db_1"
-const databaseName2 = "role_db_2"
+const databaseName1 = "role_role_db_1"
+const databaseName2 = "role_role_db_2"
 
 var testStepsData = []TestStepData{
 	{
