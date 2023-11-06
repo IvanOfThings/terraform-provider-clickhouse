@@ -7,6 +7,7 @@ import (
 	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/resources/db"
 	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/resources/role"
 	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/resources/table"
+	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/resources/user"
 	"net/url"
 	"os"
 
@@ -89,6 +90,7 @@ func New(version string) func() *schema.Provider {
 				"clickhouse_db":    db.ResourceDb(),
 				"clickhouse_table": table.ResourceTable(),
 				"clickhouse_role":  role.ResourceRole(),
+				"clickhouse_user":  user.ResourceUser(),
 			},
 			ConfigureContextFunc: configure(),
 		}

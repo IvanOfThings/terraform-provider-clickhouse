@@ -3,6 +3,7 @@ package common
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"strconv"
 	"strings"
 
@@ -36,7 +37,7 @@ func UnmarshalComment(storedComment string) (comment string, cluster string, err
 	return comment, cluster, err
 }
 
-func ToString(result ch.Result, field string, errors *[]error) *string {
+func toString(result ch.Result, field string, errors *[]error) *string {
 
 	value, err := result.String(field)
 	if err != nil {
@@ -86,4 +87,20 @@ func Quote(elems []string) []string {
 		quotedElems = append(quotedElems, fmt.Sprintf("%q", elem))
 	}
 	return quotedElems
+}
+
+func StringSetToList(set *schema.Set) []string {
+	var list []string
+	for _, item := range set.List() {
+		list = append(list, item.(string))
+	}
+	return list
+}
+
+func StringListToSet(list []string) *schema.Set {
+	var set []interface{}
+	for _, item := range list {
+		set = append(set, item)
+	}
+	return schema.NewSet(schema.HashString, set)
 }

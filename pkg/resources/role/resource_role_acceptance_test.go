@@ -3,10 +3,11 @@ package role_test
 import (
 	"fmt"
 	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/common"
+	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/model"
 	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/resources/role"
+	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/services"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"regexp"
-	"strconv"
 	"strings"
 	"testing"
 
@@ -118,7 +119,7 @@ func generateTestSteps() []resource.TestStep {
 					"database",
 					regexp.MustCompile(testStepData.database),
 				),
-				checkPrivilegesStateAttr(testStepData.privileges),
+				testutils.CheckStateSetAttr("privileges", roleResource, testStepData.privileges),
 				testAccCheckRoleResourceExists(testStepData.roleName, testStepData.database, testStepData.privileges),
 			),
 		})
@@ -131,13 +132,35 @@ func TestAccResourceRole(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		//ProviderFactories: testutils.GetProviderFactories(),
 		Providers:    testutils.Provider(),
-		CheckDestroy: testAccCheckRoleResourceDestroy(testStepsData[0].roleName),
+		CheckDestroy: testAccCheckRoleResourceDestroy([]string{roleName1, roleName2}),
 		Steps:        generateTestSteps(),
 	})
-	// Validation tests
+	// Validate privileges on create
 	resource.Test(t, resource.TestCase{
 		Providers: testutils.Provider(),
 		Steps: []resource.TestStep{
+			{
+				Config: testAccRoleResource(
+					roleName1,
+					databaseName1,
+					common.Quote([]string{"NOT_ALLOWED_PRIVILEGE"}),
+				),
+				ExpectError: regexp.MustCompile("NOT_ALLOWED_PRIVILEGE isn't in the allowed privileges list"),
+			},
+		},
+	})
+	// Validate privileges on update
+	resource.Test(t, resource.TestCase{
+		Providers:    testutils.Provider(),
+		CheckDestroy: testAccCheckRoleResourceDestroy([]string{roleName1}),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccRoleResource(
+					roleName1,
+					databaseName1,
+					common.Quote([]string{"SELECT"}),
+				),
+			},
 			{
 				Config: testAccRoleResource(
 					roleName1,
@@ -179,12 +202,12 @@ func testAccCheckRoleResourceExists(roleName string, database string, privileges
 	return func(state *terraform.State) error {
 		client := testutils.TestAccProvider.Meta().(*common.ApiClient)
 		conn := client.ClickhouseConnection
-		var errors []error
+		chRoleService := services.CHRoleService{CHConnection: conn}
 
-		dbRole := role.GetRole(conn, roleName, &errors)
+		dbRole, err := chRoleService.GetRole(roleName)
 
-		if len(errors) > 0 {
-			return errors[0]
+		if err != nil {
+			return fmt.Errorf("get role: %v", err)
 		}
 		if dbRole == nil {
 			return fmt.Errorf("role %s not found", roleName)
@@ -195,7 +218,7 @@ func testAccCheckRoleResourceExists(roleName string, database string, privileges
 		}
 
 		for _, privilege := range privileges {
-			var matchedDbRolePrivilege *role.CHGrant
+			var matchedDbRolePrivilege *model.CHGrant
 			for _, dbRolePrivilege := range dbRole.Privileges {
 				if privilege == dbRolePrivilege.AccessType {
 					matchedDbRolePrivilege = &dbRolePrivilege
@@ -214,56 +237,23 @@ func testAccCheckRoleResourceExists(roleName string, database string, privileges
 	}
 }
 
-func testAccCheckRoleResourceDestroy(roleName string) resource.TestCheckFunc {
+func testAccCheckRoleResourceDestroy(roleNames []string) resource.TestCheckFunc {
 	return func(state *terraform.State) error {
-		client := testutils.TestAccProvider.Meta().(*common.ApiClient)
-		conn := client.ClickhouseConnection
-		var errors []error
+		for _, roleName := range roleNames {
+			client := testutils.TestAccProvider.Meta().(*common.ApiClient)
+			conn := client.ClickhouseConnection
+			chRoleService := services.CHRoleService{CHConnection: conn}
 
-		dbRole := role.GetRole(conn, roleName, &errors)
+			dbRole, err := chRoleService.GetRole(roleName)
 
-		if len(errors) > 0 {
-			return errors[0]
-		}
-		if dbRole != nil {
-			return fmt.Errorf("role %s hasn't been deleted", roleName)
-		}
-
-		return nil
-	}
-}
-
-// Elements of lists and sets are stored in terraform state as independent variables with the sufix "_{index}".
-// To check the value, we need to get the length of the list and iterate over it and get the list elements one by one
-// and compare them with the values from the current test plan.
-func checkPrivilegesStateAttr(privileges []string) resource.TestCheckFunc {
-	return func(state *terraform.State) error {
-		attributes := state.RootModule().Resources[roleResource].Primary.Attributes
-		privilegesLength, err := strconv.Atoi(attributes["privileges.#"])
-		if err != nil {
-			return err
-		}
-		if len(privileges) != privilegesLength {
-			return fmt.Errorf("privileges length mismatching between plan and state")
-		}
-		var statePrivileges []string
-		for i := 0; i < privilegesLength; i++ {
-			statePrivileges = append(statePrivileges, attributes[fmt.Sprintf("privileges.%d", i)])
-		}
-
-		for _, privilege := range privileges {
-			var matchedStatePrivilege bool
-			for _, statePrivilege := range statePrivileges {
-				if privilege == statePrivilege {
-					matchedStatePrivilege = true
-					break
-				}
+			if err != nil {
+				return fmt.Errorf("get role: %v", err)
 			}
-			if matchedStatePrivilege == false {
-				return fmt.Errorf("privilege %s not found in state", privilege)
+
+			if dbRole != nil {
+				return fmt.Errorf("role %s hasn't been deleted", roleName)
 			}
 		}
-
 		return nil
 	}
 }

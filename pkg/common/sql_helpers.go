@@ -37,22 +37,22 @@ func getColumns(conn *ch.Conn, database string, tableName string, errors *[]erro
 	for i := 0; iter.Next(); i++ {
 		result := iter.Result
 		// var errors = make([]error, 0)
-		database := ToString(result, "database", errors)
-		table := ToString(result, "table", errors)
-		column_name := ToString(result, "name", errors)
-		data_type := ToString(result, "type", errors)
+		database := toString(result, "database", errors)
+		table := toString(result, "table", errors)
+		column_name := toString(result, "name", errors)
+		data_type := toString(result, "type", errors)
 		position := toUint64(result, "position", errors)
-		default_kind := ToString(result, "default_kind", errors)
-		default_expression := ToString(result, "default_expression", errors)
-		data_compressed_bytes := ToString(result, "data_compressed_bytes", errors)
-		data_uncompressed_bytes := ToString(result, "data_uncompressed_bytes", errors)
-		marks_bytes := ToString(result, "marks_bytes", errors)
-		comment := ToString(result, "comment", errors)
+		default_kind := toString(result, "default_kind", errors)
+		default_expression := toString(result, "default_expression", errors)
+		data_compressed_bytes := toString(result, "data_compressed_bytes", errors)
+		data_uncompressed_bytes := toString(result, "data_uncompressed_bytes", errors)
+		marks_bytes := toString(result, "marks_bytes", errors)
+		comment := toString(result, "comment", errors)
 		is_in_partition_key := toUint64(result, "is_in_partition_key", errors)
 		is_in_sorting_key := toUint64(result, "is_in_sorting_key", errors)
 		is_in_primary_key := toUint64(result, "is_in_primary_key", errors)
 		is_in_sampling_key := toUint64(result, "is_in_sampling_key", errors)
-		compression_codec := ToString(result, "compression_codec", errors)
+		compression_codec := toString(result, "compression_codec", errors)
 		character_octet_length := toUint64(result, "character_octet_length", errors)
 		numeric_precision := toUint64(result, "numeric_precision", errors)
 		numeric_precision_radix := toUint64(result, "numeric_precision_radix", errors)
@@ -108,7 +108,7 @@ func GetResourceNamesOnDataBases(conn *ch.Conn, databaseName string) (resources 
 	for i := 0; iter.Next(); i++ {
 		result := iter.Result
 
-		table := *ToString(result, "name", &errors)
+		table := *toString(result, "name", &errors)
 		if len(errors) > 0 {
 			return nil, errors
 		}
@@ -139,8 +139,8 @@ func GetTables(conn *ch.Conn, data *CHDataBase, errors *[]error) []clickhouseTab
 	for i := 0; iter.Next(); i++ {
 		result := iter.Result
 
-		database := *ToString(result, "database", errors)
-		table_name := *ToString(result, "name", errors)
+		database := *toString(result, "database", errors)
+		table_name := *toString(result, "name", errors)
 
 		var columns []clickhouseTablesColumn
 		columns = getColumns(conn, database, table_name, errors)
@@ -148,9 +148,9 @@ func GetTables(conn *ch.Conn, data *CHDataBase, errors *[]error) []clickhouseTab
 		table := clickhouseTable{
 			database:    database,
 			name:        table_name,
-			engine_full: *ToString(result, "engine_full", errors),
-			engine:      *ToString(result, "engine", errors),
-			comment:     *ToString(result, "comment", errors),
+			engine_full: *toString(result, "engine_full", errors),
+			engine:      *toString(result, "engine", errors),
+			comment:     *toString(result, "comment", errors),
 			columns:     columns,
 		}
 		if len(*errors) > 0 {

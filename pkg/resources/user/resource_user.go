@@ -3,91 +3,44 @@ package user
 import (
 	"context"
 	"fmt"
-
 	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/common"
+	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/model"
+	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/services"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func ResourceUser() *schema.Resource {
 	return &schema.Resource{
-		Description: "Resource to manage users",
-
+		Description:   "Resource to manage Clickhouse users",
 		CreateContext: resourceUserCreate,
+		UpdateContext: resourceUserUpdate,
 		ReadContext:   resourceUserRead,
 		DeleteContext: resourceUserDelete,
 		Schema: map[string]*schema.Schema{
-			"databases": &schema.Schema{
-				Description: "List of DB names where to grant permission to the user",
-				Type:        schema.TypeSet,
-				Required:    true,
-				Elem:        schema.TypeString,
-			},
-			"name": &schema.Schema{
+			"name": {
 				Description: "User name",
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 			},
-			"password": &schema.Schema{
+			"password": {
 				Description: "User password",
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 			},
-			"profile": &schema.Schema{
-				Description: "Order by columns to use as sorting key",
-				Type:        schema.TypeString,
+			"roles": {
+				Description: "User role",
+				Type:        schema.TypeSet,
 				Optional:    true,
-				ForceNew:    true,
-			},
-			"partition_by": &schema.Schema{
-				Description: "Partition Key to split data",
-				Type:        schema.TypeList,
-				Optional:    true,
-				ForceNew:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"by": &schema.Schema{
-							Description: "Column to use as part of the partition key",
-							Type:        schema.TypeString,
-							Required:    true,
-							ForceNew:    true,
-						},
-						"partition_function": &schema.Schema{
-							Description:      "Partition function, could be empty or one of following: toYYYYMM, toYYYYMMDD or toYYYYMMDDhhmmss",
-							Type:             schema.TypeString,
-							Optional:         true,
-							ValidateDiagFunc: common.ValidatePartitionBy,
-							Default:          nil,
-							ForceNew:         true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
-			"column": &schema.Schema{
-				Description: "Column",
-				Type:        schema.TypeList,
-				Optional:    true,
-				ForceNew:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"name": &schema.Schema{
-							Description: "Column Name",
-							Type:        schema.TypeString,
-							Required:    true,
-							ForceNew:    true,
-						},
-						"type": &schema.Schema{
-							Description:      "Column Type",
-							Type:             schema.TypeString,
-							Required:         true,
-							ValidateDiagFunc: common.ValidateType,
-							ForceNew:         true,
-						},
-					},
-				},
-			},
+			//"profile": &schema.Schema{
+			//	Description: "Order by columns to use as sorting key",
+			//	Type:        schema.TypeString,
+			//	Optional:    true,
+			//},
 		},
 	}
 }
@@ -97,105 +50,73 @@ func resourceUserRead(ctx context.Context, d *schema.ResourceData, meta any) dia
 
 	client := meta.(*common.ApiClient)
 	conn := client.ClickhouseConnection
+	chUserService := services.CHUserService{CHConnection: conn}
 
-	database := d.Get("database").(string)
-	table_name := d.Get("name").(string)
-	columns := d.Get("column").([]interface{})
-	order_by := common.MapArrayInterfaceToArrayOfStrings(d.Get("order_by").([]interface{}))
-	mappedColumns := common.MapColumns(columns)
-	err := common.ValidateParams(mappedColumns, order_by, "order_by")
+	userName := d.Get("name").(string)
+	user, err := chUserService.GetUser(userName)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("resource user read: %v", err))
 	}
 
-	if err != nil {
+	if err := d.Set("name", user.Name); err != nil {
 		return diag.FromErr(err)
 	}
-
-	data := common.CHDataBase{
-		Database: database,
-		Name:     table_name,
-	}
-
-	errors := make([]error, 0)
-	tables := common.GetTables(conn, &data, &errors)
-	if len(errors) > 0 {
-		return diag.FromErr(errors[0])
-	}
-	mappedTables := make([]common.DataSourceCHTable, 0)
-	if len(mappedTables) == 0 {
-		return diags
-	}
-
-	table, err := common.MapTableToDatasource(tables[0])
-	if err != nil {
+	if err := d.Set("roles", &user.Roles); err != nil {
 		return diag.FromErr(err)
 	}
-
-	if err := d.Set("database", &table.Database); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("name", &table.Name); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("engine", &table.Engine); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("engine_params", &table.Engine_params); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("cluster", table.Cluster); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("column", &table.Columns); err != nil {
-		return diag.FromErr(err)
-	}
-
-	d.SetId(*table.Cluster + ":" + database + ":" + table_name)
+	d.SetId(user.Name)
 
 	return diags
-
 }
 
 func resourceUserCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-
 	var diags diag.Diagnostics
 
 	client := meta.(*common.ApiClient)
 	conn := client.ClickhouseConnection
 
-	cluster := d.Get("cluster").(string)
-	database := d.Get("database").(string)
-	table_name := d.Get("name").(string)
-	columns := d.Get("column").([]interface{})
-	engine := d.Get("engine").(string)
-	comment := d.Get("comment").(string)
-	engine_params := common.MapArrayInterfaceToArrayOfStrings(d.Get("engine_params").([]interface{}))
-	order_by := common.MapArrayInterfaceToArrayOfStrings(d.Get("order_by").([]interface{}))
-	mappedColumns := common.MapColumns(columns)
-	err := common.ValidateParams(mappedColumns, order_by, "order_by")
+	userName := d.Get("name").(string)
+	password := d.Get("password").(string)
+	rolesSet := d.Get("roles").(*schema.Set)
+	chUserService := services.CHUserService{CHConnection: conn}
+	chUser, err := chUserService.CreateUser(model.UserResource{
+		Name:     userName,
+		Password: password,
+		Roles:    rolesSet,
+	})
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("resource user create: %v", err))
 	}
 
-	partition_by := d.Get("partition_by")
-
-	mappedPartitionBy, err := common.MapPartitionBy(partition_by, mappedColumns)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	query, clusterToUse := common.BuildCreateONClusterSentence(mappedColumns, database, table_name, cluster, client.DefaultCluster, engine, order_by, engine_params, mappedPartitionBy, common.GetComment(comment, cluster))
-
-	err = conn.Exec(query)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	d.SetId(clusterToUse + ":" + database + ":" + table_name)
+	d.SetId(chUser.Name)
 
 	return diags
+}
 
+func resourceUserUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	client := meta.(*common.ApiClient)
+	conn := client.ClickhouseConnection
+	chUserService := services.CHUserService{CHConnection: conn}
+
+	planUserName := d.Get("name").(string)
+	planPassword := d.Get("password").(string)
+	planRoles := d.Get("roles").(*schema.Set)
+
+	// After modify original role grants, we need to update default roles
+	chUser, err := chUserService.UpdateUser(model.UserResource{
+		Name:     planUserName,
+		Password: planPassword,
+		Roles:    planRoles,
+	}, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.SetId(chUser.Name)
+
+	return diags
 }
 
 func resourceUserDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
@@ -204,12 +125,9 @@ func resourceUserDelete(ctx context.Context, d *schema.ResourceData, meta any) d
 	client := meta.(*common.ApiClient)
 	conn := client.ClickhouseConnection
 
-	database := d.Get("database").(string)
-	table_name := d.Get("name").(string)
-	cluster := d.Get("cluster").(string)
-	clusterStatement, _ := common.GetClusterStatement(cluster, client.DefaultCluster)
+	userName := d.Get("name").(string)
 
-	err := conn.Exec(fmt.Sprintf("DROP TABLE %v.%v "+clusterStatement, database, table_name))
+	err := conn.Exec(fmt.Sprintf("DROP USER %s", userName))
 
 	if err != nil {
 		return diag.FromErr(err)
