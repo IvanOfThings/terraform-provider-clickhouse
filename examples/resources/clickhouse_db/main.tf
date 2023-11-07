@@ -23,7 +23,7 @@ resource "clickhouse_db" "test_db" {
 // see: https://github.com/Altinity/clickhouse-operator/blob/master/docs/replication_setup.md
 resource "clickhouse_db" "test_db_clusterd" {
   name    = "clustered_test_database"
-  comment = "This is a culstered test database"
+  comment = "This is a clustered test database"
   cluster = "'{cluster}'"
 }
 

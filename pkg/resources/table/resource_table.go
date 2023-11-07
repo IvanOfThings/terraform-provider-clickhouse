@@ -1,4 +1,4 @@
-package resources
+package resourcetable
 
 import (
 	"context"

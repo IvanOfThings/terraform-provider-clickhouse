@@ -3,6 +3,7 @@ package common
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"strconv"
 	"strings"
 
@@ -77,4 +78,29 @@ func GetClusterStatement(cluster string, defaultCluster string) (clusterStatemen
 		clusterStatement = "ON CLUSTER " + clusterToUse
 	}
 	return clusterStatement, clusterToUse
+}
+
+// Quote all strings on a string slice
+func Quote(elems []string) []string {
+	var quotedElems []string
+	for _, elem := range elems {
+		quotedElems = append(quotedElems, fmt.Sprintf("%q", elem))
+	}
+	return quotedElems
+}
+
+func StringSetToList(set *schema.Set) []string {
+	var list []string
+	for _, item := range set.List() {
+		list = append(list, item.(string))
+	}
+	return list
+}
+
+func StringListToSet(list []string) *schema.Set {
+	var set []interface{}
+	for _, item := range list {
+		set = append(set, item)
+	}
+	return schema.NewSet(schema.HashString, set)
 }

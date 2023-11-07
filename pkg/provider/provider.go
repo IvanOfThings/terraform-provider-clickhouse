@@ -4,12 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/resources/db"
+	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/resources/role"
+	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/resources/table"
+	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/resources/user"
 	"net/url"
 	"os"
 
 	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/common"
 	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/datasources"
-	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/resources"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/joho/godotenv"
@@ -84,12 +87,13 @@ func New(version string) func() *schema.Provider {
 				"clickhouse_dbs": datasources.DataSourceDbs(),
 			},
 			ResourcesMap: map[string]*schema.Resource{
-				"clickhouse_db":    resources.ResourceDb(),
-				"clickhouse_table": resources.ResourceTable(),
+				"clickhouse_db":    resourcedb.ResourceDb(),
+				"clickhouse_table": resourcetable.ResourceTable(),
+				"clickhouse_role":  resourcerole.ResourceRole(),
+				"clickhouse_user":  resourceuser.ResourceUser(),
 			},
+			ConfigureContextFunc: configure(),
 		}
-
-		p.ConfigureContextFunc = configure(version, p)
 
 		return p
 	}
@@ -105,7 +109,7 @@ func getEnvVar(envVarName string) (any, error) {
 
 }
 
-func configure(version string, p *schema.Provider) func(context.Context, *schema.ResourceData) (any, diag.Diagnostics) {
+func configure() func(context.Context, *schema.ResourceData) (any, diag.Diagnostics) {
 	return func(ctx context.Context, d *schema.ResourceData) (any, diag.Diagnostics) {
 
 		clickhouseUrl := d.Get("host").(string)
