@@ -106,7 +106,7 @@ provider "clickhouse" {
 ```
 
 ```hcl
-resource "clickhouse_db" "test_db_clusterd" {
+resource "clickhouse_db" "test_db_cluster" {
   name = "database_test_clustered"
   comment = "This is a test database"
   cluster = "'{cluster}'"
@@ -155,6 +155,26 @@ resource "clickhouse_table" "distributed_table" {
   cluster       = clickhouse_db.test_db_clustered.cluster
   engine        = "Distributed"
   engine_params = [clickhouse_db.test_db_clustered.cluster, clickhouse_db.test_db_clustered.name, clickhouse_table.replicated_table.name, "rand()"]
+}
+```
+
+Creating roles
+
+```hcl
+resource "clickhouse_role" "my_database_rw" {
+  name       = "my_database_rw"
+  database   = clickhouse_db.test_db_cluster.name
+  privileges = ["SELECT", "INSERT"]
+}
+```
+
+Creating users
+
+```hcl
+resource "clickhouse_user" "my_database_rw_user" {
+  name     = "my_database_rw_user"
+  password = "awesome_user_password"
+  roles    = [clickhouse_role.my_database_rw.name]
 }
 ```
 
