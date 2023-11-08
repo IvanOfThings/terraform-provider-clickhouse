@@ -22,7 +22,7 @@ Resource to manage Clickhouse roles
 
 ### Optional
 
-- `privileges` (Set of String) Granted privileges to the role. Privileges will be granted at DB level
+- `privileges` (Set of String) Granted privileges to the role. Privileges will be granted at database level
 
 ### Read-Only
 
