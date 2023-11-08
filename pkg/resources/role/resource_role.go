@@ -27,7 +27,7 @@ func ResourceRole() *schema.Resource {
 				Required:    true,
 			},
 			"privileges": {
-				Description: "Granted privileges to the role. Privileges will be granted at DB level",
+				Description: "Granted privileges to the role. Privileges will be granted at database level",
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Elem: &schema.Schema{
