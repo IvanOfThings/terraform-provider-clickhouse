@@ -40,11 +40,11 @@ Then commit the changes to `go.mod` and `go.sum`.
 ## Using the provider
 
 
-Definining provider
+Definining provider. The port should be the Clickhouse native protocol port (9000 by default, and 9440 for Clickhouse Cloud)
 
 ```hcl
 provider "clickhouse" {
-  port           = 8123
+  port           = 9000           # Clickhouse native protocol port
   host           = "127.0.0.1"
   username       = "default"
   password       = ""
@@ -57,7 +57,7 @@ In order to definte url, username and password in a safety way it is possible to
 TF_CLICKHOUSE_USERNAME=default
 TF_CLICKHOUSE_PASSWORD=""
 TF_CLICKHOUSE_HOST="127.0.0.1"
-TF_CLICKHOUSE_PORT=8123
+TF_CLICKHOUSE_PORT=9000
 ```
 
 ```hcl
@@ -73,7 +73,7 @@ Configuring provider
 
 ```hcl
 provider "clickhouse" {
-  port           = 8923
+  port           = 9000
   host           = "127.0.0.1"
   username       = "default"
   password       = ""
@@ -97,7 +97,7 @@ I is possible to use macros defined for cluster, databases, installation names i
 
 ```hcl
 provider "clickhouse" {
-  port           = 8123
+  port           = 9000
   host           = "127.0.0.1"
   username       = "default"
   password       = ""

@@ -7,13 +7,13 @@ import (
 )
 
 type CHGrant struct {
-	RoleName   string
-	AccessType string
-	Database   string
+	RoleName   string `ch:"role_name"`
+	AccessType string `ch:"access_type"`
+	Database   string `ch:"database"`
 }
 
 type CHRole struct {
-	Name       string
+	Name       string `ch:"name"`
 	Privileges []CHGrant
 }
 

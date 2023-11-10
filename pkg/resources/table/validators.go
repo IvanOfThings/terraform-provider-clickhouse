@@ -1,30 +1,12 @@
-package common
+package resourcetable
 
 import (
-	"errors"
 	"fmt"
 
 	v "github.com/go-playground/validator/v10"
 	hashicorpcty "github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 )
-
-func ValidateParams(mappedColumns []CHColumn, params []string, params_name string) error {
-	for _, param := range params {
-		found := false
-		for _, column := range mappedColumns {
-			if column.name == param {
-				found = true
-				break
-			}
-		}
-		if found == false {
-			err := errors.New(fmt.Sprintf("Value %v not found in columns a value in paramter %v", param, params_name))
-			return err
-		}
-	}
-	return nil
-}
 
 func ValidatePartitionBy(inValue any, p hashicorpcty.Path) diag.Diagnostics {
 	validate := v.New()

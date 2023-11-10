@@ -1,50 +1,38 @@
 package resourceuser
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/common"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	ch "github.com/leprosus/golang-clickhouse"
 	"strings"
 )
 
 type CHUserService struct {
-	CHConnection *ch.Conn
+	CHConnection *driver.Conn
 }
 
-func (us *CHUserService) GetUser(userName string) (*CHUser, error) {
+func (us *CHUserService) GetUser(ctx context.Context, userName string) (*CHUser, error) {
 	roleQuery := fmt.Sprintf("SELECT name, default_roles_list FROM system.users WHERE name = '%s'", userName)
 
-	roleIt, err := us.CHConnection.Fetch(roleQuery)
+	rows, err := (*us.CHConnection).Query(ctx, roleQuery)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching user: %s", err)
 	}
-	if roleIt.Next() == false {
+	if rows.Next() == false {
 		return nil, nil
 	}
-	name, err := roleIt.Result.String("name")
+	var chUser CHUser
+	err = rows.ScanStruct(&chUser)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving user 'name': %s", err)
+		return nil, fmt.Errorf("error scanning user: %s", err)
 	}
 
-	rolesStr, err := roleIt.Result.String("default_roles_list")
-	if err != nil {
-		return nil, fmt.Errorf("error retrieving user 'default_roles_list': %s", err)
-	}
-	var rolesList []string
-	err = json.Unmarshal([]byte(strings.ReplaceAll(rolesStr, "'", "\"")), &rolesList)
-	if err != nil {
-		return nil, fmt.Errorf("error unmarshalling user 'default_roles_list': %s", err)
-	}
-
-	return &CHUser{
-		Name:  name,
-		Roles: rolesList,
-	}, nil
+	return &chUser, nil
 }
 
-func (us *CHUserService) CreateUser(userPlan UserResource) (*CHUser, error) {
+func (us *CHUserService) CreateUser(ctx context.Context, userPlan UserResource) (*CHUser, error) {
 	var rolesList []string
 
 	for _, role := range userPlan.Roles.List() {
@@ -59,16 +47,17 @@ func (us *CHUserService) CreateUser(userPlan UserResource) (*CHUser, error) {
 	if len(rolesList) > 0 {
 		query = fmt.Sprintf("%s DEFAULT ROLE %s", query, strings.Join(rolesList, ","))
 	}
-	err := us.CHConnection.Exec(query)
+	err := (*us.CHConnection).Exec(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("error creating user: %s", err)
 	}
-	return us.GetUser(userPlan.Name)
+	return us.GetUser(ctx, userPlan.Name)
 }
 
-func (us *CHUserService) UpdateUser(userPlan UserResource, resourceData *schema.ResourceData) (*CHUser, error) {
+func (us *CHUserService) UpdateUser(ctx context.Context, userPlan UserResource, resourceData *schema.ResourceData) (*CHUser, error) {
+	conn := *us.CHConnection
 	stateUserName, _ := resourceData.GetChange("name")
-	user, err := us.GetUser(stateUserName.(string))
+	user, err := us.GetUser(ctx, stateUserName.(string))
 	if err != nil {
 		return nil, fmt.Errorf("error fetching user: %s", err)
 	}
@@ -103,14 +92,14 @@ func (us *CHUserService) UpdateUser(userPlan UserResource, resourceData *schema.
 	}
 
 	if len(grantRoles) > 0 {
-		err := us.CHConnection.Exec(fmt.Sprintf("GRANT %s TO %s", strings.Join(grantRoles, ","), stateUserName))
+		err := conn.Exec(ctx, fmt.Sprintf("GRANT %s TO %s", strings.Join(grantRoles, ","), stateUserName))
 		if err != nil {
 			return nil, fmt.Errorf("error granting roles to user: %s", err)
 		}
 	}
 
 	if len(revokeRoles) > 0 {
-		err := us.CHConnection.Exec(fmt.Sprintf("REVOKE %s FROM %s", strings.Join(revokeRoles, ","), stateUserName))
+		err := conn.Exec(ctx, fmt.Sprintf("REVOKE %s FROM %s", strings.Join(revokeRoles, ","), stateUserName))
 		if err != nil {
 			return nil, fmt.Errorf("error revoking roles from user: %s", err)
 		}
@@ -135,14 +124,14 @@ func (us *CHUserService) UpdateUser(userPlan UserResource, resourceData *schema.
 		changePasswordClause,
 		strings.Join(common.StringSetToList(userPlan.Roles), ","),
 	)
-	err = us.CHConnection.Exec(query)
+	err = conn.Exec(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("error updating user: %s", err)
 	}
 
-	return us.GetUser(userPlan.Name)
+	return us.GetUser(ctx, userPlan.Name)
 }
 
-func (us *CHUserService) DeleteUser(name string) error {
-	return us.CHConnection.Exec(fmt.Sprintf("DROP USER %s", name))
+func (us *CHUserService) DeleteUser(ctx context.Context, name string) error {
+	return (*us.CHConnection).Exec(ctx, fmt.Sprintf("DROP USER %s", name))
 }

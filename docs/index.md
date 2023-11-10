@@ -39,5 +39,6 @@ provider "clickhouse" {
 - `default_cluster` (String) Default cluster, if provided will be used when no cluster is provided
 - `host` (String, Sensitive) Clickhouse server url
 - `password` (String, Sensitive) Clickhouse user password with admin privileges
-- `port` (Number) Clickhouse server port
+- `port` (Number) Clickhouse server native protocol port (TCP)
+- `secure` (Boolean) Clickhouse secure connection
 - `username` (String) Clickhouse username with admin privileges
