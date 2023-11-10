@@ -3,6 +3,7 @@ package resourcedb
 import (
 	"context"
 	"fmt"
+	resourcetable "github.com/IvanOfThings/terraform-provider-clickhouse/pkg/resources/table"
 
 	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/common"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -64,27 +65,24 @@ func ResourceDb() *schema.Resource {
 }
 
 func resourceDbRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-
 	client := meta.(*common.ApiClient)
 	var diags diag.Diagnostics
-	conn := client.ClickhouseConnection
+	conn := *client.ClickhouseConnection
 	defaultCluster := client.DefaultCluster
 
 	database_name := d.Get("name").(string)
-	iter, err := conn.Fetch(fmt.Sprintf("SELECT name, engine, data_path, metadata_path, uuid, comment FROM system.databases where name = '%v'", database_name))
+	row := conn.QueryRow(ctx, fmt.Sprintf("SELECT name, engine, data_path, metadata_path, uuid, comment FROM system.databases where name = '%v'", database_name))
 
-	if err != nil {
-		return diag.FromErr(err)
+	if row.Err() != nil {
+		return diag.FromErr(fmt.Errorf("reading database from Clickhouse: %v", row.Err()))
 	}
 
-	iter.Next()
-	result := iter.Result
+	var name, engine, dataPath, metadataPath, uuid, storedComment string
 
-	name, _ := result.String("name")
-	engine, _ := result.String("engine")
-	data_path, _ := result.String("data_path")
-	metadata_path, _ := result.String("metadata_path")
-	uuid, _ := result.String("uuid")
+	err := row.Scan(&name, &engine, &dataPath, &metadataPath, &uuid, &storedComment)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("scanning Clickhouse DB row: %v", err))
+	}
 
 	if name == "" {
 		diags = append(diags, diag.Diagnostic{
@@ -95,7 +93,6 @@ func resourceDbRead(ctx context.Context, d *schema.ResourceData, meta any) diag.
 		return diags
 	}
 
-	storedComment, _ := result.String("comment")
 	comment, cluster, err := common.UnmarshalComment(storedComment)
 	if err != nil {
 		diags = append(diags, diag.Diagnostic{
@@ -106,13 +103,55 @@ func resourceDbRead(ctx context.Context, d *schema.ResourceData, meta any) diag.
 		comment, cluster = storedComment, defaultCluster
 	}
 
-	d.Set("name", name)
-	d.Set("engine", engine)
-	d.Set("data_path", data_path)
-	d.Set("metadata_path", metadata_path)
-	d.Set("uuid", uuid)
-	d.Set("comment", comment)
-	d.Set("cluster", cluster)
+	err = d.Set("name", name)
+	if err != nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("Unable to set name for db %q", name),
+		})
+	}
+	err = d.Set("engine", engine)
+	if err != nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("Unable to set engine for db %q", name),
+		})
+	}
+	err = d.Set("data_path", dataPath)
+	if err != nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("Unable to set data_path for db %q", name),
+		})
+	}
+	err = d.Set("metadata_path", metadataPath)
+	if err != nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("Unable to set metadata_path for db %q", name),
+		})
+	}
+	err = d.Set("uuid", uuid)
+	if err != nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("Unable to set uuid for db %q", name),
+		})
+	}
+	err = d.Set("comment", comment)
+	if err != nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("Unable to set comment for db %q", name),
+		})
+	}
+	err = d.Set("cluster", cluster)
+	if err != nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("Unable to set cluster for db %q", name),
+		})
+	}
 
 	d.SetId(cluster + ":" + database_name)
 
@@ -122,32 +161,26 @@ func resourceDbRead(ctx context.Context, d *schema.ResourceData, meta any) diag.
 }
 
 func resourceDbCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-
 	client := meta.(*common.ApiClient)
 	var diags diag.Diagnostics
-	conn := client.ClickhouseConnection
+	conn := *client.ClickhouseConnection
 
 	cluster, _ := d.Get("cluster").(string)
-
-	clusterStatement, clusterToUse := common.GetClusterStatement(cluster, client.DefaultCluster)
-
-	database_name := d.Get("name").(string)
+	if cluster == "" {
+		cluster = client.DefaultCluster
+	}
+	clusterStatement := common.GetClusterStatement(cluster)
+	databaseName := d.Get("name").(string)
 	comment := d.Get("comment").(string)
 
-	query := fmt.Sprintf("CREATE DATABASE %v %v COMMENT '%v'", database_name, clusterStatement, common.GetComment(comment, cluster))
+	query := fmt.Sprintf("CREATE DATABASE %v %v COMMENT '%v'", databaseName, clusterStatement, common.GetComment(comment, cluster))
 
-	// diags = append(diags, diag.Diagnostic{
-	// 	Severity: diag.Warning,
-	// 	Summary:  fmt.Sprintf("Query"),
-	// 	Detail:   fmt.Sprintf("Query %q", query),
-	// })
-
-	err := conn.Exec(query)
+	err := conn.Exec(ctx, query)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	d.SetId(clusterToUse + ":" + database_name)
+	d.SetId(cluster + ":" + databaseName)
 
 	return diags
 }
@@ -158,9 +191,9 @@ func resourceDbDelete(ctx context.Context, d *schema.ResourceData, meta any) dia
 	var diags diag.Diagnostics
 	conn := client.ClickhouseConnection
 
-	database_name := d.Get("name").(string)
+	databaseName := d.Get("name").(string)
 
-	if database_name == "" {
+	if databaseName == "" {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  "Database name not found",
@@ -169,37 +202,35 @@ func resourceDbDelete(ctx context.Context, d *schema.ResourceData, meta any) dia
 		return diags
 	}
 
-	dbResources, errors := common.GetResourceNamesOnDataBases(conn, database_name)
+	chTableService := resourcetable.CHTableService{CHConnection: conn}
+	chDBService := CHDBService{CHConnection: conn, CHTableService: &chTableService}
+	dbResources, err := chDBService.GetDBResources(ctx, databaseName)
 
-	// diags = append(diags, diag.Diagnostic{
-	// 	Severity: diag.Warning,
-	// 	Summary:  fmt.Sprintf("database_name"),
-	// 	Detail:   fmt.Sprintf("database_name %q", database_name),
-	// })
-
-	if len(errors) > 0 {
-		return diag.FromErr(errors[0])
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("resource db delete: %v", err))
 	}
-	if len(dbResources.TableNames) > 0 {
+	if len(dbResources.CHTables) > 0 {
+		var tableNames []string
+		for _, table := range dbResources.CHTables {
+			tableNames = append(tableNames, table.Name)
+		}
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Unable to delete db resource %q", database_name),
-			Detail:   fmt.Sprintf("DB resource is used by another resources and is not possible to delete it. Tables: %v.", dbResources.TableNames),
+			Summary:  fmt.Sprintf("Unable to delete db resource %q", databaseName),
+			Detail:   fmt.Sprintf("DB resource is used by another resources and is not possible to delete it. Tables: %v.", tableNames),
 		})
 		return diags
 	}
 
 	cluster, _ := d.Get("cluster").(string)
-	clusterStatement, _ := common.GetClusterStatement(cluster, client.DefaultCluster)
+	if cluster == "" {
+		cluster = client.DefaultCluster
+	}
+	clusterStatement := common.GetClusterStatement(cluster)
 
-	query := fmt.Sprintf("DROP DATABASE %v %v SYNC", database_name, clusterStatement)
+	query := fmt.Sprintf("DROP DATABASE %v %v SYNC", databaseName, clusterStatement)
 
-	// diags = append(diags, diag.Diagnostic{
-	// 	Severity: diag.Warning,
-	// 	Summary:  fmt.Sprintf("Query"),
-	// 	Detail:   fmt.Sprintf("Query %q", query),
-	// })
-	err := conn.Exec(query)
+	err = (*conn).Exec(ctx, query)
 	if err != nil {
 		return diag.FromErr(err)
 	}

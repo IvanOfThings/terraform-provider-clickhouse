@@ -6,8 +6,8 @@ import (
 )
 
 type CHUser struct {
-	Name  string
-	Roles []string
+	Name  string   `ch:"name"`
+	Roles []string `ch:"default_roles_list"`
 }
 
 type UserResource struct {

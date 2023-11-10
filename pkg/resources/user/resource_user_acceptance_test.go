@@ -1,6 +1,7 @@
 package resourceuser_test
 
 import (
+	"context"
 	"fmt"
 	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/common"
 	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/resources/user"
@@ -158,7 +159,7 @@ func testAccCheckUserResourceExists(userName string, roles []string) resource.Te
 		conn := client.ClickhouseConnection
 		chUserService := resourceuser.CHUserService{CHConnection: conn}
 
-		dbUser, err := chUserService.GetUser(userName)
+		dbUser, err := chUserService.GetUser(context.Background(), userName)
 		if err != nil {
 			return fmt.Errorf("get user: %v", err)
 		}
@@ -191,7 +192,7 @@ func testAccCheckUserResourceDestroy(userNames []string) resource.TestCheckFunc 
 			client := testutils.TestAccProvider.Meta().(*common.ApiClient)
 			conn := client.ClickhouseConnection
 			chUserService := resourceuser.CHUserService{CHConnection: conn}
-			dbRole, err := chUserService.GetUser(userName)
+			dbRole, err := chUserService.GetUser(context.Background(), userName)
 
 			if err != nil {
 				return fmt.Errorf("get user: %v", err)

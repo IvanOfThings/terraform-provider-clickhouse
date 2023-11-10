@@ -1,6 +1,7 @@
 package resourcerole_test
 
 import (
+	"context"
 	"fmt"
 	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/common"
 	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/resources/role"
@@ -202,7 +203,7 @@ func testAccCheckRoleResourceExists(roleName string, database string, privileges
 		conn := client.ClickhouseConnection
 		chRoleService := resourcerole.CHRoleService{CHConnection: conn}
 
-		dbRole, err := chRoleService.GetRole(roleName)
+		dbRole, err := chRoleService.GetRole(context.Background(), roleName)
 
 		if err != nil {
 			return fmt.Errorf("get role: %v", err)
@@ -242,7 +243,7 @@ func testAccCheckRoleResourceDestroy(roleNames []string) resource.TestCheckFunc 
 			conn := client.ClickhouseConnection
 			chRoleService := resourcerole.CHRoleService{CHConnection: conn}
 
-			dbRole, err := chRoleService.GetRole(roleName)
+			dbRole, err := chRoleService.GetRole(context.Background(), roleName)
 
 			if err != nil {
 				return fmt.Errorf("get role: %v", err)

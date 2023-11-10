@@ -2,6 +2,7 @@ package datasources
 
 import (
 	"context"
+	"log"
 
 	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/common"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -16,37 +17,37 @@ func DataSourceDbs() *schema.Resource {
 		ReadContext: dataSourceDbsRead,
 
 		Schema: map[string]*schema.Schema{
-			"dbs": &schema.Schema{
+			"dbs": {
 				Type:     schema.TypeList,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"name": &schema.Schema{
+						"name": {
 							Description: "DB Name",
 							Type:        schema.TypeString,
 							Computed:    true,
 						},
-						"engine": &schema.Schema{
+						"engine": {
 							Description: "DB Engine",
 							Type:        schema.TypeString,
 							Computed:    true,
 						},
-						"data_path": &schema.Schema{
+						"data_path": {
 							Description: "DB Path",
 							Type:        schema.TypeString,
 							Computed:    true,
 						},
-						"metadata_path": &schema.Schema{
+						"metadata_path": {
 							Description: "Metadata Path",
 							Type:        schema.TypeString,
 							Computed:    true,
 						},
-						"uuid": &schema.Schema{
+						"uuid": {
 							Description: "Metadata Path",
 							Type:        schema.TypeString,
 							Computed:    true,
 						},
-						"comment": &schema.Schema{
+						"comment": {
 							Description: "Database comment, it will be codified in a json along with come metadata information (like cluster name in case of clustering)",
 							Type:        schema.TypeString,
 							Computed:    true,
@@ -61,26 +62,31 @@ func DataSourceDbs() *schema.Resource {
 func dataSourceDbsRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client := meta.(*common.ApiClient)
 	var diags diag.Diagnostics
-	conn := client.ClickhouseConnection
+	conn := *client.ClickhouseConnection
 
-	iter, err := conn.Fetch("SELECT name, engine, data_path, metadata_path, uuid, comment FROM system.databases")
+	rows, err := conn.Query(ctx, "SELECT name, engine, data_path, metadata_path, uuid, comment FROM system.databases")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	databases := make([]map[string]string, 0)
+	var dbResources []map[string]interface{}
 
-	for i := 0; iter.Next(); i++ {
-		result := iter.Result
-
-		db, err := common.MapDbData(result)
-		if err != nil {
-			return diag.FromErr(err)
+	for i := 0; rows.Next(); i++ {
+		var chDatabase CHDatabase
+		if err := rows.ScanStruct(&chDatabase); err != nil {
+			log.Fatal(err)
 		}
-		databases = append(databases, db)
-
+		dbResource := map[string]interface{}{
+			"name":          chDatabase.Name,
+			"engine":        chDatabase.Engine,
+			"data_path":     chDatabase.DataPath,
+			"metadata_path": chDatabase.MetadataPath,
+			"uuid":          chDatabase.Uuid,
+			"comment":       chDatabase.Comment,
+		}
+		dbResources = append(dbResources, dbResource)
 	}
-	if err := d.Set("dbs", &databases); err != nil {
+	if err := d.Set("dbs", dbResources); err != nil {
 		return diag.FromErr(err)
 	}
 	d.SetId("databases_read")

@@ -46,7 +46,7 @@ func resourceUserRead(ctx context.Context, d *schema.ResourceData, meta any) dia
 	chUserService := CHUserService{CHConnection: conn}
 
 	userName := d.Get("name").(string)
-	user, err := chUserService.GetUser(userName)
+	user, err := chUserService.GetUser(ctx, userName)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("resource user read: %v", err))
 	}
@@ -72,7 +72,7 @@ func resourceUserCreate(ctx context.Context, d *schema.ResourceData, meta any) d
 	password := d.Get("password").(string)
 	rolesSet := d.Get("roles").(*schema.Set)
 	chUserService := CHUserService{CHConnection: conn}
-	chUser, err := chUserService.CreateUser(UserResource{
+	chUser, err := chUserService.CreateUser(ctx, UserResource{
 		Name:     userName,
 		Password: password,
 		Roles:    rolesSet,
@@ -98,7 +98,7 @@ func resourceUserUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 	planRoles := d.Get("roles").(*schema.Set)
 
 	// After modify original role grants, we need to update default roles
-	chUser, err := chUserService.UpdateUser(UserResource{
+	chUser, err := chUserService.UpdateUser(ctx, UserResource{
 		Name:     planUserName,
 		Password: planPassword,
 		Roles:    planRoles,
@@ -117,10 +117,11 @@ func resourceUserDelete(ctx context.Context, d *schema.ResourceData, meta any) d
 
 	client := meta.(*common.ApiClient)
 	conn := client.ClickhouseConnection
+	chUserService := CHUserService{CHConnection: conn}
 
 	userName := d.Get("name").(string)
 
-	err := conn.Exec(fmt.Sprintf("DROP USER %s", userName))
+	err := chUserService.DeleteUser(ctx, userName)
 
 	if err != nil {
 		return diag.FromErr(err)

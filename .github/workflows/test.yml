@@ -71,8 +71,8 @@ jobs:
           CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
         ports:
           - 8123:8123
-          - 9090:9000
-          - 9099:9009   
+          - 9000:9000
+          - 9009:9009
         # Set health checks to wait until redis has started
         options: >-
           --health-cmd "clickhouse-client --database=system --query='select * from databases'"
@@ -121,7 +121,7 @@ jobs:
         TF_CLICKHOUSE_HOST: "127.0.0.1"
         TF_CLICKHOUSE_USERNAME: "default"
         TF_CLICKHOUSE_PASSWORD: ""
-        TF_CLICKHOUSE_PORT: "8123"
+        TF_CLICKHOUSE_PORT: "9000"
 
         # Set whatever additional acceptance test env vars here. You can
         # optionally use data from your repository secrets using the

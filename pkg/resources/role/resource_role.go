@@ -55,7 +55,7 @@ func resourceRoleUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 	}
 
 	chRoleService := CHRoleService{CHConnection: conn}
-	chRole, err := chRoleService.UpdateRole(RoleResource{Name: planRoleName, Database: planDatabase, Privileges: planPrivileges}, d)
+	chRole, err := chRoleService.UpdateRole(ctx, RoleResource{Name: planRoleName, Database: planDatabase, Privileges: planPrivileges}, d)
 
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("resource role update: %v", err))
@@ -74,7 +74,7 @@ func resourceRoleRead(ctx context.Context, d *schema.ResourceData, meta any) dia
 	chRoleService := CHRoleService{CHConnection: conn}
 
 	roleNameState := d.Get("name").(string)
-	chRole, err := chRoleService.GetRole(roleNameState)
+	chRole, err := chRoleService.GetRole(ctx, roleNameState)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("resource role read: %v", err))
 	}
@@ -114,7 +114,7 @@ func resourceRoleCreate(ctx context.Context, d *schema.ResourceData, meta any) d
 	}
 
 	chRoleService := CHRoleService{CHConnection: conn}
-	chRole, err := chRoleService.CreateRole(roleName, database, common.StringSetToList(privileges))
+	chRole, err := chRoleService.CreateRole(ctx, roleName, database, common.StringSetToList(privileges))
 
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("resource role create: %v", err))
@@ -133,7 +133,7 @@ func resourceRoleDelete(ctx context.Context, d *schema.ResourceData, meta any) d
 	roleName := d.Get("name").(string)
 	chRoleService := CHRoleService{CHConnection: conn}
 
-	if err := chRoleService.DeleteRole(roleName); err != nil {
+	if err := chRoleService.DeleteRole(ctx, roleName); err != nil {
 		return diag.FromErr(fmt.Errorf("resource role delete: %v", err))
 	}
 	return diags

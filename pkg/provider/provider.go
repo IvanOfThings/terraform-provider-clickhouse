@@ -2,21 +2,21 @@ package provider
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
+	"github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/common"
+	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/datasources"
 	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/resources/db"
 	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/resources/role"
 	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/resources/table"
 	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/resources/user"
-	"net/url"
-	"os"
-
-	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/common"
-	"github.com/IvanOfThings/terraform-provider-clickhouse/pkg/datasources"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/joho/godotenv"
-	ch "github.com/leprosus/golang-clickhouse"
+	"net/url"
+	"os"
 )
 
 func init() {
@@ -45,7 +45,7 @@ func New(version string) func() *schema.Provider {
 					Optional:    true,
 					Default:     "",
 				},
-				"username": &schema.Schema{
+				"username": {
 					Description: "Clickhouse username with admin privileges",
 					Type:        schema.TypeString,
 					Optional:    true,
@@ -53,7 +53,7 @@ func New(version string) func() *schema.Provider {
 						return getEnvVar("TF_CLICKHOUSE_USERNAME")
 					},
 				},
-				"password": &schema.Schema{
+				"password": {
 					Description: "Clickhouse user password with admin privileges",
 					Type:        schema.TypeString,
 					Optional:    true,
@@ -65,7 +65,7 @@ func New(version string) func() *schema.Provider {
 						return "", nil
 					},
 				},
-				"host": &schema.Schema{
+				"host": {
 					Description: "Clickhouse server url",
 					Type:        schema.TypeString,
 					Required:    true,
@@ -74,13 +74,19 @@ func New(version string) func() *schema.Provider {
 						return getEnvVar("TF_CLICKHOUSE_HOST")
 					},
 				},
-				"port": &schema.Schema{
-					Description: "Clickhouse server port",
+				"port": {
+					Description: "Clickhouse server native protocol port (TCP)",
 					Type:        schema.TypeInt,
 					Required:    true,
 					DefaultFunc: func() (any, error) {
 						return getEnvVar("TF_CLICKHOUSE_PORT")
 					},
+				},
+				"secure": {
+					Description: "Clickhouse secure connection",
+					Type:        schema.TypeBool,
+					Optional:    true,
+					Default:     false,
 				},
 			},
 			DataSourcesMap: map[string]*schema.Resource{
@@ -112,19 +118,42 @@ func getEnvVar(envVarName string) (any, error) {
 func configure() func(context.Context, *schema.ResourceData) (any, diag.Diagnostics) {
 	return func(ctx context.Context, d *schema.ResourceData) (any, diag.Diagnostics) {
 
-		clickhouseUrl := d.Get("host").(string)
+		host := d.Get("host").(string)
 		port := d.Get("port").(int)
 		username := d.Get("username").(string)
 		defaultCluster := d.Get("default_cluster").(string)
 		password := d.Get("password").(string)
-		clickhouseConnection := ch.New(clickhouseUrl, port, username, url.QueryEscape(password))
+		secure := d.Get("secure").(bool)
+
+		var TLSConfig *tls.Config
+		// To use TLS it's necessary to set the TLSConfig field as not nil
+		if secure {
+			TLSConfig = &tls.Config{
+				InsecureSkipVerify: false,
+			}
+		}
+		conn, err := clickhouse.Open(&clickhouse.Options{
+			Addr: []string{fmt.Sprintf("%s:%d", host, port)},
+			Auth: clickhouse.Auth{
+				Username: username,
+				Password: url.QueryEscape(password),
+			},
+			Settings: clickhouse.Settings{
+				"max_execution_time": 30,
+			},
+			TLS: TLSConfig,
+		})
 
 		var diags diag.Diagnostics
 
-		if clickhouseUrl == "" {
-			return nil, diag.FromErr(fmt.Errorf("Error retrieving clickhouse uri"))
+		if err != nil {
+			return nil, diag.FromErr(fmt.Errorf("error connecting to clickhouse: %v", err))
 		}
 
-		return &common.ApiClient{ClickhouseConnection: clickhouseConnection, DefaultCluster: defaultCluster}, diags
+		if err := conn.Ping(ctx); err != nil {
+			return nil, diag.FromErr(fmt.Errorf("ping clickhouse database: %w", err))
+		}
+
+		return &common.ApiClient{ClickhouseConnection: &conn, DefaultCluster: defaultCluster}, diags
 	}
 }

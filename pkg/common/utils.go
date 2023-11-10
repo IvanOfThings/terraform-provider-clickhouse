@@ -4,16 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"strconv"
 	"strings"
-
-	ch "github.com/leprosus/golang-clickhouse"
 )
-
-type storedComment struct {
-	cluster string
-	comment string
-}
 
 func GetComment(comment string, cluster string) string {
 	storingComment := fmt.Sprintf(`{"comment":"%v","cluster":"%v"}`, comment, cluster)
@@ -37,47 +29,11 @@ func UnmarshalComment(storedComment string) (comment string, cluster string, err
 	return comment, cluster, err
 }
 
-func toString(result ch.Result, field string, errors *[]error) *string {
-
-	value, err := result.String(field)
-	if err != nil {
-		*errors = append(*errors, err)
-		return nil
-	}
-	if value == "\\N" {
-		return nil
-	}
-	return &value
-}
-
-func toUint64(result ch.Result, field string, errors *[]error) *uint64 {
-
-	value, err := result.String(field)
-	if err != nil {
-		*errors = append(*errors, err)
-		return nil
-	}
-	if value == "\\N" {
-		return nil
-	}
-	valueUint, err := strconv.ParseUint(value, 10, 64)
-	if err != nil {
-		*errors = append(*errors, err)
-		return nil
-	}
-	return &valueUint
-}
-
-func GetClusterStatement(cluster string, defaultCluster string) (clusterStatement string, clusterToUse string) {
-	clusterToUse = defaultCluster
+func GetClusterStatement(cluster string) (clusterStatement string) {
 	if cluster != "" {
-		clusterToUse = cluster
+		return fmt.Sprintf("ON CLUSTER %s", cluster)
 	}
-	clusterStatement = ""
-	if clusterToUse != "" {
-		clusterStatement = "ON CLUSTER " + clusterToUse
-	}
-	return clusterStatement, clusterToUse
+	return ""
 }
 
 // Quote all strings on a string slice
