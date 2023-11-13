@@ -15,7 +15,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/joho/godotenv"
-	"net/url"
 	"os"
 )
 
@@ -136,7 +135,7 @@ func configure() func(context.Context, *schema.ResourceData) (any, diag.Diagnost
 			Addr: []string{fmt.Sprintf("%s:%d", host, port)},
 			Auth: clickhouse.Auth{
 				Username: username,
-				Password: url.QueryEscape(password),
+				Password: password,
 			},
 			Settings: clickhouse.Settings{
 				"max_execution_time": 30,
