@@ -116,7 +116,6 @@ func getEnvVar(envVarName string) (any, error) {
 
 func configure() func(context.Context, *schema.ResourceData) (any, diag.Diagnostics) {
 	return func(ctx context.Context, d *schema.ResourceData) (any, diag.Diagnostics) {
-
 		host := d.Get("host").(string)
 		port := d.Get("port").(int)
 		username := d.Get("username").(string)
