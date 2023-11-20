@@ -88,7 +88,7 @@ func (ts *CHTableService) CreateTable(ctx context.Context, tableResource TableRe
 }
 
 func (ts *CHTableService) DeleteTable(ctx context.Context, tableResource TableResource) error {
-	query := fmt.Sprintf("DROP TABLE %s.%s %s", tableResource.Database, tableResource.Name, common.GetClusterStatement(tableResource.Cluster))
+	query := fmt.Sprintf("DROP TABLE %s.%s %s SYNC", tableResource.Database, tableResource.Name, common.GetClusterStatement(tableResource.Cluster))
 	err := (*ts.CHConnection).Exec(ctx, query)
 	if err != nil {
 		return fmt.Errorf("deleting Clickhouse table: %v", err)

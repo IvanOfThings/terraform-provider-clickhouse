@@ -17,7 +17,10 @@ var AllowedPrivileges = []string{
 	"CREATE DICTIONARY",
 	"DROP DATABASE",
 	"DROP TABLE",
-	"SHOW TABLES"}
+	"SHOW TABLES",
+	"ALTER TABLE",
+	"ALTER VIEW",
+}
 
 func ValidatePrivileges(privileges *schema.Set) diag.Diagnostics {
 	var diagnostics diag.Diagnostics
