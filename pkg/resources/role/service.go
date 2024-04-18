@@ -12,6 +12,13 @@ type CHRoleService struct {
 	CHConnection *driver.Conn
 }
 
+func getGrantQuery(roleName string, privileges []string, database string) string {
+	if database == "system" {
+		return fmt.Sprintf("GRANT CURRENT GRANTS (%s ON %s.*) TO %s", strings.Join(privileges, ","), database, roleName)
+	}
+	return fmt.Sprintf("GRANT %s ON %s.* TO %s", strings.Join(privileges, ","), database, roleName)
+}
+
 func (rs *CHRoleService) getRoleGrants(ctx context.Context, roleName string) ([]CHGrant, error) {
 	query := fmt.Sprintf("SELECT role_name, access_type, database FROM system.grants WHERE role_name = '%s'", roleName)
 	rows, err := (*rs.CHConnection).Query(ctx, query)
@@ -106,11 +113,10 @@ func (rs *CHRoleService) UpdateRole(ctx context.Context, rolePlan RoleResource, 
 			return nil, fmt.Errorf("error revoking all privileges from role %s: %v", chRole.Name, err)
 		}
 		dbPrivileges := chRole.GetPrivilegesList()
-		err = conn.Exec(ctx, fmt.Sprintf(
-			"GRANT %s ON %s.* TO %s",
-			strings.Join(dbPrivileges, ","),
-			rolePlan.Database,
+		err = conn.Exec(ctx, getGrantQuery(
 			rolePlan.Name,
+			dbPrivileges,
+			rolePlan.Database,
 		))
 		if err != nil {
 			return nil, fmt.Errorf("error granting privileges to role %s: %v", chRole.Name, err)
@@ -118,7 +124,7 @@ func (rs *CHRoleService) UpdateRole(ctx context.Context, rolePlan RoleResource, 
 	}
 
 	if len(grantPrivileges) > 0 {
-		err := conn.Exec(ctx, fmt.Sprintf("GRANT %s ON %s.* TO %s", strings.Join(grantPrivileges, ","), rolePlan.Database, rolePlan.Name))
+		err := conn.Exec(ctx, getGrantQuery(rolePlan.Name, grantPrivileges, rolePlan.Database))
 		if err != nil {
 			return nil, fmt.Errorf("error granting privileges to role %s: %v", chRole.Name, err)
 		}
@@ -144,7 +150,7 @@ func (rs *CHRoleService) CreateRole(ctx context.Context, name string, database s
 	var chPrivileges []CHGrant
 
 	for _, privilege := range privileges {
-		err = conn.Exec(ctx, fmt.Sprintf("GRANT %s ON %s.* TO %s", privilege, database, name))
+		err = conn.Exec(ctx, getGrantQuery(name, []string{privilege}, database))
 		if err != nil {
 			// Rollback
 			err2 := conn.Exec(ctx, fmt.Sprintf("DROP ROLE %s", name))
