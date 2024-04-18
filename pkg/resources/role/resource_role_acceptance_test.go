@@ -27,7 +27,7 @@ const roleName2 = "test_role_2"
 const databaseName1 = "role_role_db_1"
 const databaseName2 = "role_role_db_2"
 
-var testStepsData = []TestStepData{
+var test1StepsData = []TestStepData{
 	{
 		// Create role
 		roleName: roleName1,
@@ -98,7 +98,47 @@ var testStepsData = []TestStepData{
 	},
 }
 
-func generateTestSteps() []resource.TestStep {
+var test2StepsData = []TestStepData{
+	{
+		// Create role
+		roleName: roleName1,
+		database: "system",
+		privileges: []string{
+			"SELECT",
+			"INSERT",
+		},
+	},
+	{
+		// Remove role privileges
+		roleName: roleName1,
+		database: "system",
+		privileges: []string{
+			"SELECT",
+		},
+	},
+	{
+		// Remove and add role privileges
+		roleName: roleName1,
+		database: databaseName1,
+		privileges: []string{
+			"INSERT",
+		},
+	},
+	{
+		// Check all allowed privileges
+		roleName:   roleName1,
+		database:   "system",
+		privileges: resourcerole.AllowedPrivileges,
+	},
+	{
+		// Change role name
+		roleName:   roleName2,
+		database:   "system",
+		privileges: resourcerole.AllowedPrivileges,
+	},
+}
+
+func generateTestSteps(testStepsData []TestStepData) []resource.TestStep {
 	var testSteps []resource.TestStep
 	for _, testStepData := range testStepsData {
 		testSteps = append(testSteps, resource.TestStep{
@@ -127,12 +167,18 @@ func generateTestSteps() []resource.TestStep {
 }
 
 func TestAccResourceRole(t *testing.T) {
-	// Feature tests
+	// Feature tests, user database
 	resource.Test(t, resource.TestCase{
 		//ProviderFactories: testutils.GetProviderFactories(),
 		Providers:    testutils.Provider(),
 		CheckDestroy: testAccCheckRoleResourceDestroy([]string{roleName1, roleName2}),
-		Steps:        generateTestSteps(),
+		Steps:        generateTestSteps(test1StepsData),
+	})
+	// Feature tests, system database
+	resource.Test(t, resource.TestCase{
+		Providers:    testutils.Provider(),
+		CheckDestroy: testAccCheckRoleResourceDestroy([]string{roleName1, roleName2}),
+		Steps:        generateTestSteps(test2StepsData),
 	})
 	// Validate privileges on create
 	resource.Test(t, resource.TestCase{
@@ -173,11 +219,20 @@ func TestAccResourceRole(t *testing.T) {
 }
 
 func testAccRoleResource(roleName string, database string, privileges []string) string {
+	if database == "system" {
+		return fmt.Sprintf(`
+	resource "clickhouse_role" "test_role" {
+		name = "%s"
+		database = "system"
+		privileges = [%s]
+	}`, roleName, strings.Join(privileges, ","))
+	}
+
 	databaseComment := "db comment"
 	databaseResource := fmt.Sprintf(`
 	resource "clickhouse_db" "%[1]s" {
 		name = "%[1]s"
-		comment = "[3]%s"
+		comment = "%[3]s"
 	}
 
 	resource "clickhouse_db" "%[2]s" {
@@ -188,7 +243,7 @@ func testAccRoleResource(roleName string, database string, privileges []string) 
 
 	roleResource := fmt.Sprintf(`
 	resource "clickhouse_role" "test_role" {
-		name = "%[1]s"
+		name = "%s"
 		database = clickhouse_db.%s.name
 		privileges = [%s]
 	}
