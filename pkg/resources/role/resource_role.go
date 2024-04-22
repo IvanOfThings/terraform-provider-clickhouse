@@ -48,7 +48,7 @@ func resourceRoleUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 	planDatabase := d.Get("database").(string)
 	planPrivileges := d.Get("privileges").(*schema.Set)
 
-	diags = ValidatePrivileges(planPrivileges)
+	diags = ValidatePrivileges(planDatabase, planPrivileges)
 
 	if diags.HasError() {
 		return diags
@@ -108,7 +108,7 @@ func resourceRoleCreate(ctx context.Context, d *schema.ResourceData, meta any) d
 	roleName := d.Get("name").(string)
 	privileges := d.Get("privileges").(*schema.Set)
 
-	diags = ValidatePrivileges(privileges)
+	diags = ValidatePrivileges(database, privileges)
 	if diags.HasError() {
 		return diags
 	}
