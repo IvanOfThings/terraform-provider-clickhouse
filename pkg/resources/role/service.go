@@ -68,6 +68,7 @@ func (rs *CHRoleService) GetRole(ctx context.Context, roleName string) (*CHRole,
 func (rs *CHRoleService) UpdateRole(ctx context.Context, rolePlan RoleResource, resourceData *schema.ResourceData) (*CHRole, error) {
 	stateRoleName, _ := resourceData.GetChange("name")
 	chRole, err := rs.GetRole(ctx, stateRoleName.(string))
+
 	if err != nil {
 		return nil, fmt.Errorf("error fetching role: %s", err)
 	}
