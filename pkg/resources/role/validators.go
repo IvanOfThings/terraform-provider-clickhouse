@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-var AllowedPrivileges = []string{
+var AllowedDbLevelPrivileges = []string{
 	"SELECT",
 	"INSERT",
 	"ALTER",
@@ -17,20 +17,48 @@ var AllowedPrivileges = []string{
 	"CREATE DICTIONARY",
 	"DROP DATABASE",
 	"DROP TABLE",
-	"SHOW TABLES"}
+	"SHOW TABLES",
+}
 
-func ValidatePrivileges(privileges *schema.Set) diag.Diagnostics {
+var AllowedGlobalPrivileges = []string{
+	"REMOTE",
+}
+
+var AllowedPrivileges = append(AllowedDbLevelPrivileges, AllowedGlobalPrivileges...)
+
+func IsGlobalPrivilege(privilege string) bool {
+	for _, globalPrivilege := range AllowedGlobalPrivileges {
+		if privilege == globalPrivilege {
+			return true
+		}
+	}
+	return false
+}
+
+func ValidatePrivileges(database string, privileges *schema.Set) diag.Diagnostics {
 	var diagnostics diag.Diagnostics
 
 	for _, privilege := range privileges.List() {
-		validatePrivilege(privilege.(string), &diagnostics)
+		validatePrivilege(database, privilege.(string), &diagnostics)
 	}
 	return diagnostics
 }
 
-func validatePrivilege(privilege string, diagnostics *diag.Diagnostics) {
+func validatePrivilege(database string, privilege string, diagnostics *diag.Diagnostics) {
 	isAllowed := false
 	upperCasePrivilege := strings.ToUpper(privilege)
+
+	if IsGlobalPrivilege(privilege) && database != "*" {
+		diagnostic := diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "wrong value",
+			Detail: fmt.Sprintf(
+				"Global privilege %s is only allowed for database '*'",
+				privilege),
+		}
+		*diagnostics = append(*diagnostics, diagnostic)
+		return
+	}
 	for _, allowedPrivilege := range AllowedPrivileges {
 		if upperCasePrivilege == allowedPrivilege {
 			isAllowed = true

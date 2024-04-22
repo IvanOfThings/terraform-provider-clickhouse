@@ -13,7 +13,7 @@ type CHRoleService struct {
 }
 
 func getGrantQuery(roleName string, privileges []string, database string) string {
-	if database == "system" {
+	if database == "system" || database == "*" {
 		return fmt.Sprintf("GRANT CURRENT GRANTS (%s ON %s.*) TO %s", strings.Join(privileges, ","), database, roleName)
 	}
 	return fmt.Sprintf("GRANT %s ON %s.* TO %s", strings.Join(privileges, ","), database, roleName)
@@ -33,6 +33,9 @@ func (rs *CHRoleService) getRoleGrants(ctx context.Context, roleName string) ([]
 		err := rows.ScanStruct(&privilege)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning role grant: %s", err)
+		}
+		if privilege.Database == "" {
+			privilege.Database = "*"
 		}
 		privileges = append(privileges, privilege)
 	}
