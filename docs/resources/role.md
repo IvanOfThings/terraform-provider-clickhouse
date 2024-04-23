@@ -17,7 +17,7 @@ Resource to manage Clickhouse roles
 
 ### Required
 
-- `database` (String) Database where to grant permissions to the user
+- `database` (String) Database where to grant permissions to the user. You can apply privileges to all databases by using '*'
 - `name` (String) Role name
 
 ### Optional

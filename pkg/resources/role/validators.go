@@ -17,11 +17,15 @@ var AllowedDbLevelPrivileges = []string{
 	"CREATE DICTIONARY",
 	"DROP DATABASE",
 	"DROP TABLE",
+	"DROP DICTIONARY",
+	"DROP VIEW",
 	"SHOW TABLES",
+	"dictGet",
 }
 
 var AllowedGlobalPrivileges = []string{
 	"REMOTE",
+	"SYSTEM RELOAD DICTIONARY",
 }
 
 var AllowedPrivileges = append(AllowedDbLevelPrivileges, AllowedGlobalPrivileges...)
@@ -46,7 +50,6 @@ func ValidatePrivileges(database string, privileges *schema.Set) diag.Diagnostic
 
 func validatePrivilege(database string, privilege string, diagnostics *diag.Diagnostics) {
 	isAllowed := false
-	upperCasePrivilege := strings.ToUpper(privilege)
 
 	if IsGlobalPrivilege(privilege) && database != "*" {
 		diagnostic := diag.Diagnostic{
@@ -60,7 +63,7 @@ func validatePrivilege(database string, privilege string, diagnostics *diag.Diag
 		return
 	}
 	for _, allowedPrivilege := range AllowedPrivileges {
-		if upperCasePrivilege == allowedPrivilege {
+		if privilege == allowedPrivilege {
 			isAllowed = true
 			break
 		}
