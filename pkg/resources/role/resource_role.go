@@ -22,7 +22,7 @@ func ResourceRole() *schema.Resource {
 				Required:    true,
 			},
 			"database": {
-				Description: "Database where to grant permissions to the user",
+				Description: "Database where to grant permissions to the user. You can apply privileges to all databases by using '*'",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
