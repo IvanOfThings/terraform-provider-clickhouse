@@ -193,11 +193,9 @@ func TestAccResourceRole(t *testing.T) {
 		Steps: generateTestSteps([]TestStepData{
 			{
 				// Create role
-				roleName: roleName1,
-				database: "*",
-				privileges: []string{
-					"REMOTE",
-				},
+				roleName:   roleName1,
+				database:   "*",
+				privileges: resourcerole.AllowedGlobalPrivileges,
 			}}),
 	})
 	// Validate privileges on create
@@ -224,6 +222,45 @@ func TestAccResourceRole(t *testing.T) {
 					common.Quote([]string{"REMOTE"}),
 				),
 				ExpectError: regexp.MustCompile("Global privilege REMOTE is only allowed for database '\\*'"),
+			},
+		},
+	})
+	resource.Test(t, resource.TestCase{
+		Providers: testutils.Provider(),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccRoleResource(
+					roleName1,
+					databaseName1,
+					common.Quote([]string{"SYSTEM RELOAD DICTIONARY"}),
+				),
+				ExpectError: regexp.MustCompile("Global privilege SYSTEM RELOAD DICTIONARY is only allowed for database '\\*'"),
+			},
+		},
+	})
+	resource.Test(t, resource.TestCase{
+		Providers: testutils.Provider(),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccRoleResource(
+					roleName1,
+					databaseName1,
+					common.Quote([]string{"S3"}),
+				),
+				ExpectError: regexp.MustCompile("Global privilege S3 is only allowed for database '\\*'"),
+			},
+		},
+	})
+	resource.Test(t, resource.TestCase{
+		Providers: testutils.Provider(),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccRoleResource(
+					roleName1,
+					databaseName1,
+					common.Quote([]string{"CREATE TEMPORARY TABLE"}),
+				),
+				ExpectError: regexp.MustCompile("Global privilege CREATE TEMPORARY TABLE is only allowed for database '\\*'"),
 			},
 		},
 	})
