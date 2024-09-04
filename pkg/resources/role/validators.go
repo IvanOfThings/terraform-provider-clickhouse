@@ -26,6 +26,8 @@ var AllowedDbLevelPrivileges = []string{
 var AllowedGlobalPrivileges = []string{
 	"REMOTE",
 	"SYSTEM RELOAD DICTIONARY",
+	"S3",
+	"CREATE TEMPORARY TABLE",
 }
 
 var AllowedPrivileges = append(AllowedDbLevelPrivileges, AllowedGlobalPrivileges...)
