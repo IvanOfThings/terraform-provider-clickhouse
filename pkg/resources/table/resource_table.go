@@ -182,7 +182,7 @@ func resourceTableCreate(ctx context.Context, d *schema.ResourceData, meta any) 
 	tableResource.OrderBy = common.MapArrayInterfaceToArrayOfStrings(d.Get("order_by").([]interface{}))
 	tableResource.SetPartitionBy(d.Get("partition_by").([]interface{}))
 
-	if tableResource.Cluster != "" {
+	if tableResource.Cluster == "" {
 		tableResource.Cluster = client.DefaultCluster
 	}
 
