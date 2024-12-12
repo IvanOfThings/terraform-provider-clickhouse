@@ -19,7 +19,12 @@ var AllowedDbLevelPrivileges = []string{
 	"DROP TABLE",
 	"DROP DICTIONARY",
 	"DROP VIEW",
+	"TRUNCATE",
+	"OPTIMIZE",
+	"SHOW DATABASES",
 	"SHOW TABLES",
+	"SHOW COLUMNS",
+	"SHOW DICTIONARIES",
 	"dictGet",
 }
 
