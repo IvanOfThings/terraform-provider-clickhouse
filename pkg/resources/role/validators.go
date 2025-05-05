@@ -20,6 +20,7 @@ var AllowedDbLevelPrivileges = []string{
 	"DROP DICTIONARY",
 	"DROP VIEW",
 	"SHOW TABLES",
+	"SYSTEM FLUSH",
 	"dictGet",
 }
 
