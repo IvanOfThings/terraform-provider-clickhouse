@@ -209,18 +209,6 @@ func resourceDbDelete(ctx context.Context, d *schema.ResourceData, meta any) dia
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("resource db delete: %v", err))
 	}
-	if len(dbResources.CHTables) > 0 {
-		var tableNames []string
-		for _, table := range dbResources.CHTables {
-			tableNames = append(tableNames, table.Name)
-		}
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Unable to delete db resource %q", databaseName),
-			Detail:   fmt.Sprintf("DB resource is used by another resources and is not possible to delete it. Tables: %v.", tableNames),
-		})
-		return diags
-	}
 
 	cluster, _ := d.Get("cluster").(string)
 	if cluster == "" {
