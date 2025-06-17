@@ -22,7 +22,8 @@ var AllowedDbLevelPrivileges = []string{
 	"DROP VIEW",
 	"SHOW TABLES",
 	"dictGet",
-	"TRUNCATE TABLE",
+	"TRUNCATE",
+	"SYSTEM FLUSH",
 }
 
 var AllowedGlobalPrivileges = []string{
@@ -30,7 +31,6 @@ var AllowedGlobalPrivileges = []string{
 	"SYSTEM RELOAD DICTIONARY",
 	"S3",
 	"CREATE TEMPORARY TABLE",
-	"FLUSH LOGS",
 }
 
 var AllowedPrivileges = append(AllowedDbLevelPrivileges, AllowedGlobalPrivileges...)

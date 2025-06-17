@@ -265,19 +265,6 @@ func TestAccResourceRole(t *testing.T) {
 			},
 		},
 	})
-	resource.Test(t, resource.TestCase{
-		Providers: testutils.Provider(),
-		Steps: []resource.TestStep{
-			{
-				Config: testAccRoleResource(
-					roleName1,
-					databaseName1,
-					common.Quote([]string{"FLUSH LOGS"}),
-				),
-				ExpectError: regexp.MustCompile("Global privilege FLUSH LOGS is only allowed for database '\\*'"),
-			},
-		},
-	})
 	// Validate privileges on update
 	resource.Test(t, resource.TestCase{
 		Providers:    testutils.Provider(),
