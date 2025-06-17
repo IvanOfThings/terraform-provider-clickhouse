@@ -23,12 +23,12 @@ var AllowedDbLevelPrivileges = []string{
 	"SHOW TABLES",
 	"dictGet",
 	"TRUNCATE",
-	"SYSTEM FLUSH",
 }
 
 var AllowedGlobalPrivileges = []string{
 	"REMOTE",
 	"SYSTEM RELOAD DICTIONARY",
+	"SYSTEM FLUSH LOGS",
 	"S3",
 	"CREATE TEMPORARY TABLE",
 }
