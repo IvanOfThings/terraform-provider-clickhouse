@@ -27,6 +27,7 @@ var AllowedDbLevelPrivileges = []string{
 
 var AllowedGlobalPrivileges = []string{
 	"REMOTE",
+	"SYSTEM FLUSH LOGS",
 	"SYSTEM RELOAD DICTIONARY",
 	"S3",
 	"CREATE TEMPORARY TABLE",

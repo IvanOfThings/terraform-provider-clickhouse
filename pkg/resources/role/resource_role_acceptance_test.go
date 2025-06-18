@@ -246,6 +246,19 @@ func TestAccResourceRole(t *testing.T) {
 				Config: testAccRoleResource(
 					roleName1,
 					databaseName1,
+					common.Quote([]string{"SYSTEM FLUSH LOGS"}),
+				),
+				ExpectError: regexp.MustCompile("Global privilege SYSTEM FLUSH LOGS is only allowed for database '\\*'"),
+			},
+		},
+	})
+	resource.Test(t, resource.TestCase{
+		Providers: testutils.Provider(),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccRoleResource(
+					roleName1,
+					databaseName1,
 					common.Quote([]string{"S3"}),
 				),
 				ExpectError: regexp.MustCompile("Global privilege S3 is only allowed for database '\\*'"),
