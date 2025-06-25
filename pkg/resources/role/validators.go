@@ -2,9 +2,10 @@ package resourcerole
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"strings"
 )
 
 var AllowedDbLevelPrivileges = []string{
@@ -21,10 +22,12 @@ var AllowedDbLevelPrivileges = []string{
 	"DROP VIEW",
 	"SHOW TABLES",
 	"dictGet",
+	"TRUNCATE",
 }
 
 var AllowedGlobalPrivileges = []string{
 	"REMOTE",
+	"SYSTEM FLUSH LOGS",
 	"SYSTEM RELOAD DICTIONARY",
 	"S3",
 	"CREATE TEMPORARY TABLE",
