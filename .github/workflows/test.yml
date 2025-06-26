@@ -51,6 +51,15 @@ jobs:
         with:
           go-version-file: 'go.mod'
           cache: true
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: '1.6.6'
+          terraform_wrapper: false
+      - name: Debug terraform binary
+        run: |
+          which terraform
+          terraform version
       - run: go generate ./...
       - name: git diff
         run: |

@@ -5,6 +5,7 @@ NAME=clickhouse
 BINARY=terraform-provider-${NAME}
 VERSION=2.0.0
 OS_ARCH=linux_amd64
+OS_ARCH_DARWIN=darwin_arm64
 
 default: testacc
 
@@ -35,6 +36,9 @@ install: build
 	mkdir -p ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}
 	mv ${BINARY} ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}
 	
+install-darwin: build
+	mkdir -p ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH_DARWIN}
+	mv ${BINARY} ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH_DARWIN}
 	
 test: 
 	go test -i $(TEST) || exit 1                                                   
