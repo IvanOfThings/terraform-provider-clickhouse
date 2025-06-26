@@ -55,6 +55,12 @@ jobs:
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: '1.6.6'
+          terraform_wrapper: false
+      - name: Debug terraform binary
+        run: |
+          which terraform
+          terraform version
+          terraform init ./examples/
       - run: go generate ./...
       - name: git diff
         run: |
