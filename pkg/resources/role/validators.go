@@ -78,7 +78,7 @@ func validatePrivilege(database string, privilege string, diagnostics *diag.Diag
 			Severity: diag.Error,
 			Summary:  "wrong value",
 			Detail: fmt.Sprintf(
-				"%s isn't in the allowed privileges list: [%s]",
+				"%s is not in the allowed privileges list: [%s]",
 				privilege,
 				strings.Join(AllowedPrivileges, ", ")),
 		}

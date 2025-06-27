@@ -209,7 +209,7 @@ func TestAccResourceRole(t *testing.T) {
 					databaseName1,
 					common.Quote([]string{"NOT_ALLOWED_PRIVILEGE"}),
 				),
-				ExpectError: regexp.MustCompile("NOT_ALLOWED_PRIVILEGE isn't in the allowed privileges list"),
+				ExpectError: regexp.MustCompile("NOT_ALLOWED_PRIVILEGE is not in the allowed privileges list"),
 			},
 		},
 	})
@@ -296,7 +296,7 @@ func TestAccResourceRole(t *testing.T) {
 					databaseName1,
 					common.Quote([]string{"NOT_ALLOWED_PRIVILEGE"}),
 				),
-				ExpectError: regexp.MustCompile("NOT_ALLOWED_PRIVILEGE isn't in the allowed privileges list"),
+				ExpectError: regexp.MustCompile("NOT_ALLOWED_PRIVILEGE is not in the allowed privileges list"),
 			},
 		},
 	})
