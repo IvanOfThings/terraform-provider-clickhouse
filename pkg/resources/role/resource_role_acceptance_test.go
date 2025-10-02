@@ -173,6 +173,20 @@ func generateTestSteps(testStepsData []TestStepData) []resource.TestStep {
 	return testSteps
 }
 
+func getTestableGlobalPrivileges() []string {
+	var testable []string
+	excludePrivileges := map[string]bool{
+		"REMOTE": true,
+		"S3":     true,
+	}
+	for _, priv := range resourcerole.AllowedGlobalPrivileges {
+		if !excludePrivileges[priv] {
+			testable = append(testable, priv)
+		}
+	}
+	return testable
+}
+
 func TestAccResourceRole(t *testing.T) {
 	// Feature tests, user database
 	resource.Test(t, resource.TestCase{
@@ -187,7 +201,7 @@ func TestAccResourceRole(t *testing.T) {
 		CheckDestroy: testAccCheckRoleResourceDestroy([]string{roleName1, roleName2}),
 		Steps:        generateTestSteps(test2StepsData),
 	})
-	// Feature tests, global privileges
+	// Feature tests, global privileges (excluding REMOTE and S3 which get expanded by ClickHouse)
 	resource.Test(t, resource.TestCase{
 		Providers:    testutils.Provider(),
 		CheckDestroy: testAccCheckRoleResourceDestroy([]string{roleName1, roleName2}),
@@ -196,7 +210,7 @@ func TestAccResourceRole(t *testing.T) {
 				// Create role
 				roleName:   roleName1,
 				database:   "*",
-				privileges: resourcerole.AllowedGlobalPrivileges,
+				privileges: getTestableGlobalPrivileges(),
 			}}),
 	})
 	// Validate privileges on create
