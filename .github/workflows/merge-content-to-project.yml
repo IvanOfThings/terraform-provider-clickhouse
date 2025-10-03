@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write # needed for creating tags and releases
+  actions: write # needed for triggering other workflows
 
 jobs:
   merge-content-to-project:
@@ -25,4 +26,4 @@ jobs:
         run: npx semantic-release --debug
         env:
           # Use PAT to allow triggering other workflows
-          GITHUB_TOKEN: ${{ secrets.RELEASE_GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
