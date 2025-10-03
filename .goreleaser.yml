@@ -31,11 +31,13 @@ builds:
     ignore:
       - goos: darwin
         goarch: "386"
+      - goos: windows
+        goarch: arm
+        goarm: "6"
     binary: "{{ .ProjectName }}_v{{ .Version }}"
 
 archives:
-  - format: zip
-    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+  - name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
 
 checksum:
   extra_files:
