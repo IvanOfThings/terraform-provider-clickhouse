@@ -24,5 +24,5 @@ jobs:
       - name: "Release with semantic-release"
         run: npx semantic-release --debug
         env:
-          # GitHub sets this automatically
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Use PAT to allow triggering other workflows
+          GITHUB_TOKEN: ${{ secrets.RELEASE_GITHUB_TOKEN }}
