@@ -70,6 +70,13 @@ func buildSettingsSentence(settings map[string]string) string {
 	return ""
 }
 
+func buildTTLSentence(ttl string) string {
+	if ttl != "" {
+		return fmt.Sprintf("TTL %s", ttl)
+	}
+	return ""
+}
+
 func buildCreateOnClusterSentence(resource TableResource) (query string) {
 	columnsStatement := ""
 	if len(resource.Columns) > 0 {
@@ -88,7 +95,7 @@ func buildCreateOnClusterSentence(resource TableResource) (query string) {
 	clusterStatement := common.GetClusterStatement(resource.Cluster)
 
 	ret := fmt.Sprintf(
-		"CREATE TABLE %v.%v %v %v ENGINE = %v(%v) %s %s %s COMMENT '%s'",
+		"CREATE TABLE %v.%v %v %v ENGINE = %v(%v) %s %s %s %s COMMENT '%s'",
 		resource.Database,
 		resource.Name,
 		clusterStatement,
@@ -97,6 +104,7 @@ func buildCreateOnClusterSentence(resource TableResource) (query string) {
 		strings.Join(resource.EngineParams, ", "),
 		buildOrderBySentence(resource.OrderBy),
 		buildPartitionBySentence(resource.PartitionBy),
+		buildTTLSentence(resource.TTL),
 		buildSettingsSentence(resource.Settings),
 		resource.Comment,
 	)

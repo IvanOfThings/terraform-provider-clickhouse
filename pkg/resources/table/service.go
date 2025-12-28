@@ -62,6 +62,21 @@ func (ts *CHTableService) UpdateTable(ctx context.Context, table TableResource, 
 			return err
 		}
 	}
+	if resourceData.HasChange("ttl") {
+		if table.TTL != "" {
+			query := fmt.Sprintf("ALTER TABLE %s.%s %s MODIFY TTL %s", table.Database, table.Name, clusterStatement, table.TTL)
+			err := (*ts.CHConnection).Exec(ctx, query)
+			if err != nil {
+				return fmt.Errorf("modifying TTL in Clickhouse table: %v", err)
+			}
+		} else {
+			query := fmt.Sprintf("ALTER TABLE %s.%s %s REMOVE TTL", table.Database, table.Name, clusterStatement)
+			err := (*ts.CHConnection).Exec(ctx, query)
+			if err != nil {
+				return fmt.Errorf("removing TTL from Clickhouse table: %v", err)
+			}
+		}
+	}
 	if resourceData.HasChange("column") {
 		old, new := resourceData.GetChange("column")
 		oldColumns := old.([]interface{})

@@ -130,15 +130,20 @@ func ResourceTable() *schema.Resource {
 					},
 				},
 			},
-			"settings": {
-				Description: "Table settings",
-				Type:        schema.TypeMap,
-				Optional:    true,
-				ForceNew:    true,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
+		"settings": {
+			Description: "Table settings",
+			Type:        schema.TypeMap,
+			Optional:    true,
+			ForceNew:    true,
+			Elem: &schema.Schema{
+				Type: schema.TypeString,
 			},
+		},
+		"ttl": {
+			Description: "Table TTL expression, e.g. 'event_date + INTERVAL 30 DAY'",
+			Type:        schema.TypeString,
+			Optional:    true,
+		},
 			"index": {
 				Description: "Index",
 				Type:        schema.TypeList,
@@ -320,6 +325,7 @@ func resourceTableCreate(ctx context.Context, d *schema.ResourceData, meta any) 
 	tableResource.OrderBy = common.MapArrayInterfaceToArrayOfStrings(d.Get("order_by").([]interface{}))
 	tableResource.SetPartitionBy(d.Get("partition_by").([]interface{}))
 	tableResource.Settings = common.MapInterfaceToMapOfString(d.Get("settings").(map[string]interface{}))
+	tableResource.TTL = d.Get("ttl").(string)
 
 	if tableResource.Cluster == "" {
 		tableResource.Cluster = client.DefaultCluster
@@ -377,6 +383,7 @@ func resourceTableUpdate(ctx context.Context, d *schema.ResourceData, meta any) 
 	tableResource.Cluster = d.Get("cluster").(string)
 	tableResource.setColumns(d.Get("column").([]interface{}))
 	tableResource.Comment = common.GetComment(d.Get("comment").(string), tableResource.Cluster, nil)
+	tableResource.TTL = d.Get("ttl").(string)
 
 	err := chTableService.UpdateTable(ctx, tableResource, d)
 	if err != nil {
