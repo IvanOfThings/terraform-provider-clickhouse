@@ -1,0 +1,87 @@
+services:
+  # ZooKeeper for cluster coordination
+  zookeeper:
+    image: zookeeper:3.8
+    container_name: clickhouse-zookeeper
+    hostname: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_SERVERS: server.1=zookeeper:2888:3888;2181
+    volumes:
+      - zookeeper-data:/data
+      - zookeeper-logs:/datalog
+    networks:
+      - clickhouse-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ClickHouse Node 1 (Shard 1, Replica 1)
+  clickhouse-01:
+    image: clickhouse/clickhouse-server:latest
+    container_name: clickhouse-01
+    hostname: clickhouse-01
+    ports:
+      - "8123:8123"  # HTTP interface
+      - "9000:9000"  # Native protocol (used by provider)
+      - "9009:9009"  # Inter-server communication
+    environment:
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    volumes:
+      - clickhouse-01-data:/var/lib/clickhouse
+      - ./docker/clickhouse-01/config.d:/etc/clickhouse-server/config.d
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    networks:
+      - clickhouse-network
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--query=SELECT 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ClickHouse Node 2 (Shard 2, Replica 1)
+  clickhouse-02:
+    image: clickhouse/clickhouse-server:latest
+    container_name: clickhouse-02
+    hostname: clickhouse-02
+    ports:
+      - "8124:8123"  # HTTP interface
+      - "9001:9000"  # Native protocol
+      - "9010:9009"  # Inter-server communication
+    environment:
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    volumes:
+      - clickhouse-02-data:/var/lib/clickhouse
+      - ./docker/clickhouse-02/config.d:/etc/clickhouse-server/config.d
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    networks:
+      - clickhouse-network
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--query=SELECT 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  zookeeper-data:
+    driver: local
+  zookeeper-logs:
+    driver: local
+  clickhouse-01-data:
+    driver: local
+  clickhouse-02-data:
+    driver: local
+
+networks:
+  clickhouse-network:
+    driver: bridge

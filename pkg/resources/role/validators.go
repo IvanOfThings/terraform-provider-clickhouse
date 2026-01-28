@@ -25,14 +25,48 @@ var AllowedDbLevelPrivileges = []string{
 	"TRUNCATE",
 }
 
-var AllowedGlobalPrivileges = []string{
+// SOURCE privileges that expand into READ + WRITE (v25.7+)
+// See: https://clickhouse.com/docs/sql-reference/statements/grant#privileges
+var ExpandableSourcePrivileges = []string{
 	"REMOTE",
+	"S3",
+	"AZURE",
+	"HDFS",
+	"URL",
+	"MYSQL",
+	"POSTGRES",
+	"MONGO",
+	"KAFKA",
+}
+
+var AllowedGlobalPrivileges = []string{
+	// Source privileges (expand to READ + WRITE)
+	"REMOTE",
+	"S3",
+	"AZURE",
+	"HDFS",
+	"URL",
+	"MYSQL",
+	"POSTGRES",
+	"MONGO",
+	"KAFKA",
+	// System privileges
 	"SYSTEM FLUSH LOGS",
 	"SYSTEM RELOAD DICTIONARY",
-	"S3",
+	// Table creation
 	"CREATE TEMPORARY TABLE",
+	// Function management
 	"CREATE FUNCTION",
 	"DROP FUNCTION",
+}
+
+func IsExpandablePrivilege(privilege string) bool {
+	for _, expandablePrivilege := range ExpandableSourcePrivileges {
+		if privilege == expandablePrivilege {
+			return true
+		}
+	}
+	return false
 }
 
 var AllowedPrivileges = append(AllowedDbLevelPrivileges, AllowedGlobalPrivileges...)
