@@ -106,7 +106,7 @@ func parseGrantStatement(statement, expectedRole string) ([]CHGrant, error) {
 
 	onIdx := strings.Index(upperBody, " ON ")
 	if onIdx == -1 {
-		return nil, fmt.Errorf("invalid grant statement (missing ON): %q", statement)
+		return nil, fmt.Errorf("missing ' ON ' in grant statement: %s", statement)
 	}
 
 	privPart := strings.TrimSpace(grantBody[:onIdx])
@@ -115,7 +115,7 @@ func parseGrantStatement(statement, expectedRole string) ([]CHGrant, error) {
 
 	toIdx := strings.Index(upperRest, " TO ")
 	if toIdx == -1 {
-		return nil, fmt.Errorf("invalid grant statement (missing TO): %q", statement)
+		return nil, fmt.Errorf("missing ' TO ' in grant statement: %s", statement)
 	}
 
 	scopePart := strings.TrimSpace(rest[:toIdx])
@@ -152,10 +152,7 @@ func parseGrantStatement(statement, expectedRole string) ([]CHGrant, error) {
 		}
 
 	default:
-		return nil, fmt.Errorf(
-			"unsupported grant scope (table-level not supported): %q",
-			scopePart,
-		)
+		return nil, fmt.Errorf("table-level grants are not supported: %s", scopePart)
 	}
 
 	grants := make([]CHGrant, 0, len(privileges))
