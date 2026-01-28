@@ -1,0 +1,23 @@
+pkg/resources/role/service.go
+  1d9b7c0c3b4419ca 109,118,155
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.37",
+  "base_commit_sha": "234a7c2f6d08759c14b0d5615c31a5c324dc8469",
+  "prompts": {
+    "1d9b7c0c3b4419ca": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dce97f41-2ca7-42e0-92a4-802d2bea5402",
+        "model": "claude-sonnet-4-5-20250929"
+      },
+      "human_author": "Ivan Perea <ivan.perea@lansweeper.com>",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 6,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    }
+  }
+}
