@@ -79,63 +79,97 @@ func (rs *CHRoleService) getRoleGrants(ctx context.Context, roleName string) ([]
 	return privileges, nil
 }
 
-// parseGrantStatement parses SHOW GRANTS output to extract privilege information
-// Example inputs:
-//   "GRANT REMOTE ON *.* TO role_name"
-//   "GRANT SELECT, INSERT ON database.* TO role_name"
-//   "GRANT SELECT ON database.table TO role_name"
-func parseGrantStatement(statement string, roleName string) ([]CHGrant, error) {
-	// Remove "GRANT " prefix
-	if !strings.HasPrefix(statement, "GRANT ") {
-		return nil, fmt.Errorf("invalid grant statement: %s", statement)
+// parseGrantStatement parses a single ClickHouse SHOW GRANTS statement
+// and returns the corresponding CHGrant entries.
+//
+// Supported forms:
+//   - GRANT <privileges> ON *.* TO <role>
+//   - GRANT <privileges> ON <database>.* TO <role>
+//
+// Notes:
+//   - The role in the statement must match expectedRole
+//   - Table-level grants (<database>.<table>) are currently rejected
+//   - Privileges are split on commas and normalized via trimming
+func parseGrantStatement(statement, expectedRole string) ([]CHGrant, error) {
+	stmt := strings.TrimSpace(statement)
+
+	// Normalize keyword case for parsing, but keep original tokens
+	upper := strings.ToUpper(stmt)
+
+	if !strings.HasPrefix(upper, "GRANT ") {
+		return nil, fmt.Errorf("invalid grant statement (missing GRANT): %q", statement)
 	}
-	statement = strings.TrimPrefix(statement, "GRANT ")
 
-	// Find " ON " to split privileges from scope
-	onIndex := strings.Index(statement, " ON ")
-	if onIndex == -1 {
-		return nil, fmt.Errorf("missing ' ON ' in grant statement: %s", statement)
+	// Split into GRANT <privileges> ON <scope> TO <role>
+	grantBody := stmt[len("GRANT "):]
+	upperBody := upper[len("GRANT "):]
+
+	onIdx := strings.Index(upperBody, " ON ")
+	if onIdx == -1 {
+		return nil, fmt.Errorf("invalid grant statement (missing ON): %q", statement)
 	}
 
-	// Extract privileges (e.g., "REMOTE" or "SELECT, INSERT")
-	privilegesPart := statement[:onIndex]
-	privilegeNames := strings.Split(privilegesPart, ",")
+	privPart := strings.TrimSpace(grantBody[:onIdx])
+	rest := grantBody[onIdx+4:]
+	upperRest := upperBody[onIdx+4:]
 
-	// Extract scope (everything after " ON " and before " TO ")
-	remainder := statement[onIndex+4:] // Skip " ON "
-	toIndex := strings.Index(remainder, " TO ")
-	if toIndex == -1 {
-		return nil, fmt.Errorf("missing ' TO ' in grant statement: %s", statement)
+	toIdx := strings.Index(upperRest, " TO ")
+	if toIdx == -1 {
+		return nil, fmt.Errorf("invalid grant statement (missing TO): %q", statement)
 	}
-	scope := strings.TrimSpace(remainder[:toIndex])
 
-	// Parse database from scope
-	// "*.*" means global (database = "*")
-	// "database.*" means database level
-	// "database.table" means table level (we currently don't support this)
+	scopePart := strings.TrimSpace(rest[:toIdx])
+	rolePart := strings.TrimSpace(rest[toIdx+4:])
+
+	if rolePart != expectedRole {
+		return nil, fmt.Errorf(
+			"grant role mismatch: expected %q, got %q",
+			expectedRole, rolePart,
+		)
+	}
+
+	// Parse privileges
+	rawPrivileges := strings.Split(privPart, ",")
+	privileges := make([]string, 0, len(rawPrivileges))
+	for _, p := range rawPrivileges {
+		p = strings.TrimSpace(p)
+		if p == "" {
+			return nil, fmt.Errorf("empty privilege in grant: %q", statement)
+		}
+		privileges = append(privileges, p)
+	}
+
+	// Parse scope
 	var database string
-	if scope == "*.*" {
+	switch {
+	case scopePart == "*.*":
 		database = "*"
-	} else if strings.HasSuffix(scope, ".*") {
-		// Extract database name (remove ".*" suffix)
-		database = strings.TrimSuffix(scope, ".*")
-	} else {
-		// Table-level grants are not supported in our provider
-		return nil, fmt.Errorf("table-level grants are not supported: %s", scope)
+
+	case strings.HasSuffix(scopePart, ".*"):
+		database = strings.TrimSuffix(scopePart, ".*")
+		if database == "" {
+			return nil, fmt.Errorf("invalid database scope: %q", scopePart)
+		}
+
+	default:
+		return nil, fmt.Errorf(
+			"unsupported grant scope (table-level not supported): %q",
+			scopePart,
+		)
 	}
 
-	// Create CHGrant for each privilege
-	var grants []CHGrant
-	for _, privilegeName := range privilegeNames {
+	grants := make([]CHGrant, 0, len(privileges))
+	for _, p := range privileges {
 		grants = append(grants, CHGrant{
-			RoleName:   roleName,
-			AccessType: strings.TrimSpace(privilegeName),
+			RoleName:   expectedRole,
+			AccessType: p,
 			Database:   database,
 		})
 	}
 
 	return grants, nil
 }
+
 
 func (rs *CHRoleService) GetRole(ctx context.Context, roleName string) (*CHRole, error) {
 	roleQuery := fmt.Sprintf("SELECT name FROM system.roles WHERE name = '%s'", roleName)
