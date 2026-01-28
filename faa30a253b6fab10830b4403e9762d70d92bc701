@@ -1,0 +1,33 @@
+pkg/resources/role/resource_role_acceptance_test.go
+  1d9b7c0c3b4419ca 176-235,237-440,442-523,540,549
+pkg/resources/role/validators.go
+  1d9b7c0c3b4419ca 28-41,43,45-53,56,58,63-69
+pkg/resources/role/service.go
+  1d9b7c0c3b4419ca 16-25,27-47,51-54,58,63-64,66,68-74,76,82-137
+pkg/resources/role/service_test.go
+  1d9b7c0c3b4419ca 1-176
+examples/issue-remote-privilege/README.md
+  1d9b7c0c3b4419ca 1-146
+examples/issue-remote-privilege/main.tf
+  1d9b7c0c3b4419ca 1-25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.37",
+  "base_commit_sha": "faa30a253b6fab10830b4403e9762d70d92bc701",
+  "prompts": {
+    "1d9b7c0c3b4419ca": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dce97f41-2ca7-42e0-92a4-802d2bea5402",
+        "model": "claude-sonnet-4-5-20250929"
+      },
+      "human_author": "Ivan Perea <ivan.perea@lansweeper.com>",
+      "messages": [],
+      "total_additions": 1749,
+      "total_deletions": 164,
+      "accepted_lines": 1613,
+      "overriden_lines": 0
+    }
+  }
+}
