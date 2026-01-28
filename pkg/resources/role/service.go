@@ -13,34 +13,128 @@ type CHRoleService struct {
 }
 
 func getGrantQuery(roleName string, privileges []string, database string) string {
-	if database == "system" || database == "*" {
-		return fmt.Sprintf("GRANT CURRENT GRANTS (%s ON %s.*) TO %s", strings.Join(privileges, ","), database, roleName)
+	// Separate global privileges from database-level privileges
+	var globalPrivileges []string
+	var dbPrivileges []string
+
+	for _, privilege := range privileges {
+		if IsGlobalPrivilege(privilege) {
+			globalPrivileges = append(globalPrivileges, privilege)
+		} else {
+			dbPrivileges = append(dbPrivileges, privilege)
+		}
 	}
-	return fmt.Sprintf("GRANT %s ON %s.* TO %s", strings.Join(privileges, ","), database, roleName)
+
+	var queries []string
+
+	// Grant global privileges with ON *.* syntax (no CURRENT GRANTS wrapper)
+	if len(globalPrivileges) > 0 {
+		queries = append(queries, fmt.Sprintf("GRANT %s ON *.* TO %s",
+			strings.Join(globalPrivileges, ","), roleName))
+	}
+
+	// Grant database-level privileges with appropriate syntax
+	if len(dbPrivileges) > 0 {
+		if database == "system" || database == "*" {
+			queries = append(queries, fmt.Sprintf("GRANT CURRENT GRANTS (%s ON %s.*) TO %s",
+				strings.Join(dbPrivileges, ","), database, roleName))
+		} else {
+			queries = append(queries, fmt.Sprintf("GRANT %s ON %s.* TO %s",
+				strings.Join(dbPrivileges, ","), database, roleName))
+		}
+	}
+
+	return strings.Join(queries, "; ")
 }
 
 func (rs *CHRoleService) getRoleGrants(ctx context.Context, roleName string) ([]CHGrant, error) {
-	query := fmt.Sprintf("SELECT role_name, access_type, database FROM system.grants WHERE role_name = '%s'", roleName)
+	// Use SHOW GRANTS instead of SELECT from system.grants
+	// SHOW GRANTS returns the original granted privileges (e.g., REMOTE)
+	// system.grants returns expanded privileges (e.g., READ + WRITE)
+	query := fmt.Sprintf("SHOW GRANTS FOR %s", roleName)
 	rows, err := (*rs.CHConnection).Query(ctx, query)
 
 	if err != nil {
-		return nil, fmt.Errorf("error fetching role grants: %s", err)
+		return nil, fmt.Errorf("error fetching role grants: %w", err)
 	}
 
 	var privileges []CHGrant
 	for rows.Next() {
-		var privilege CHGrant
-		err := rows.ScanStruct(&privilege)
+		var grantStatement string
+		err := rows.Scan(&grantStatement)
 		if err != nil {
-			return nil, fmt.Errorf("error scanning role grant: %s", err)
+			return nil, fmt.Errorf("error scanning grant statement: %w", err)
 		}
-		if privilege.Database == "" {
-			privilege.Database = "*"
+
+		// Parse SHOW GRANTS output
+		// Example: "GRANT REMOTE ON *.* TO role_name"
+		// Example: "GRANT SELECT, INSERT ON database.* TO role_name"
+		grants, err := parseGrantStatement(grantStatement, roleName)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing grant statement '%s': %w", grantStatement, err)
 		}
-		privileges = append(privileges, privilege)
+		privileges = append(privileges, grants...)
 	}
 
 	return privileges, nil
+}
+
+// parseGrantStatement parses SHOW GRANTS output to extract privilege information
+// Example inputs:
+//   "GRANT REMOTE ON *.* TO role_name"
+//   "GRANT SELECT, INSERT ON database.* TO role_name"
+//   "GRANT SELECT ON database.table TO role_name"
+func parseGrantStatement(statement string, roleName string) ([]CHGrant, error) {
+	// Remove "GRANT " prefix
+	if !strings.HasPrefix(statement, "GRANT ") {
+		return nil, fmt.Errorf("invalid grant statement: %s", statement)
+	}
+	statement = strings.TrimPrefix(statement, "GRANT ")
+
+	// Find " ON " to split privileges from scope
+	onIndex := strings.Index(statement, " ON ")
+	if onIndex == -1 {
+		return nil, fmt.Errorf("missing ' ON ' in grant statement: %s", statement)
+	}
+
+	// Extract privileges (e.g., "REMOTE" or "SELECT, INSERT")
+	privilegesPart := statement[:onIndex]
+	privilegeNames := strings.Split(privilegesPart, ",")
+
+	// Extract scope (everything after " ON " and before " TO ")
+	remainder := statement[onIndex+4:] // Skip " ON "
+	toIndex := strings.Index(remainder, " TO ")
+	if toIndex == -1 {
+		return nil, fmt.Errorf("missing ' TO ' in grant statement: %s", statement)
+	}
+	scope := strings.TrimSpace(remainder[:toIndex])
+
+	// Parse database from scope
+	// "*.*" means global (database = "*")
+	// "database.*" means database level
+	// "database.table" means table level (we currently don't support this)
+	var database string
+	if scope == "*.*" {
+		database = "*"
+	} else if strings.HasSuffix(scope, ".*") {
+		// Extract database name (remove ".*" suffix)
+		database = strings.TrimSuffix(scope, ".*")
+	} else {
+		// Table-level grants are not supported in our provider
+		return nil, fmt.Errorf("table-level grants are not supported: %s", scope)
+	}
+
+	// Create CHGrant for each privilege
+	var grants []CHGrant
+	for _, privilegeName := range privilegeNames {
+		grants = append(grants, CHGrant{
+			RoleName:   roleName,
+			AccessType: strings.TrimSpace(privilegeName),
+			Database:   database,
+		})
+	}
+
+	return grants, nil
 }
 
 func (rs *CHRoleService) GetRole(ctx context.Context, roleName string) (*CHRole, error) {

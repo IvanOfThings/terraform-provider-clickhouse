@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<clickhouse>
+    <!-- Cluster configuration -->
+    <remote_servers>
+        <test_cluster>
+            <!-- Shard 1 -->
+            <shard>
+                <replica>
+                    <host>clickhouse-01</host>
+                    <port>9000</port>
+                </replica>
+            </shard>
+            <!-- Shard 2 -->
+            <shard>
+                <replica>
+                    <host>clickhouse-02</host>
+                    <port>9000</port>
+                </replica>
+            </shard>
+        </test_cluster>
+    </remote_servers>
+
+    <!-- ZooKeeper configuration -->
+    <zookeeper>
+        <node>
+            <host>zookeeper</host>
+            <port>2181</port>
+        </node>
+    </zookeeper>
+
+    <!-- Distributed DDL -->
+    <distributed_ddl>
+        <path>/clickhouse/task_queue/ddl</path>
+    </distributed_ddl>
+
+    <!-- Macros for Node 1 -->
+    <macros>
+        <cluster>test_cluster</cluster>
+        <shard>01</shard>
+        <replica>01</replica>
+    </macros>
+
+    <!-- Allow listening on all interfaces -->
+    <listen_host>0.0.0.0</listen_host>
+
+    <!-- Inter-server communication -->
+    <interserver_http_host>clickhouse-01</interserver_http_host>
+    <interserver_http_port>9009</interserver_http_port>
+</clickhouse>
