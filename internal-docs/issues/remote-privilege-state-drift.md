@@ -339,9 +339,9 @@ terraform {
 
 ## Related Documentation
 
-- **Testing Guide**: `docs/TESTING.md` - Full testing documentation
-- **Revoke Fix Guide**: `docs/guides/REVOKE_FIX.md` - Detailed fix explanation
-- **Setup Guide**: `docs/guides/SETUP.md` - ClickHouse setup instructions
+- **Testing Guide**: `internal-docs/TESTING.md` - Full testing documentation
+- **Revoke Fix Guide**: `docs/guides/revoke-fix.md` - Detailed fix explanation
+- **Setup Guide**: `docs/guides/setup.md` - ClickHouse setup instructions
 - **Architecture**: `CLAUDE.md` - Provider architecture and privilege system
 
 ## Prevention

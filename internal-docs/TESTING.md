@@ -41,7 +41,7 @@ All tests require:
 # Standalone ClickHouse instance
 docker run -d -p 9000:9000 -p 8123:8123 clickhouse/clickhouse-server
 
-# OR use docker-compose for clustered setup (see docs/guides/SETUP.md)
+# OR use docker-compose for clustered setup (see docs/guides/setup.md)
 docker-compose up -d
 ```
 

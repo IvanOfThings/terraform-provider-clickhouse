@@ -50,8 +50,8 @@ Each issue document should include:
 **Coverage:** 54+ test apply cycles, 100% expandable privilege coverage
 
 **See Also:**
-- [docs/guides/REVOKE_FIX.md](../guides/REVOKE_FIX.md) - Detailed fix explanation
-- [docs/TESTING.md](../TESTING.md) - Test coverage documentation
+- [docs/guides/revoke-fix.md](../../docs/guides/revoke-fix.md) - Detailed fix explanation
+- [internal-docs/TESTING.md](../TESTING.md) - Test coverage documentation
 
 ## Known Limitations
 
@@ -139,7 +139,7 @@ resource "clickhouse_user" "app_user" {
 1. **Check existing documentation:**
    - Review this README
    - Check resolved issues (may already be fixed)
-   - Read [docs/TESTING.md](../TESTING.md) for troubleshooting
+   - Read [internal-docs/TESTING.md](../TESTING.md) for troubleshooting
 
 2. **Verify the issue:**
    - Reproduce with minimal configuration
@@ -200,7 +200,7 @@ Create a GitHub issue with:
 
 If you're documenting a new issue:
 
-1. **Create new markdown file:** `docs/issues/descriptive-name.md`
+1. **Create new markdown file:** `internal-docs/issues/descriptive-name.md`
 2. **Follow the format:** Use resolved issues as template
 3. **Be comprehensive:** Include all required sections
 4. **Link related docs:** Reference guides, tests, architecture docs
@@ -217,7 +217,7 @@ If you're documenting a new issue:
 ## Directory Structure
 
 ```
-docs/issues/
+internal-docs/issues/
 ├── README.md                           # This file
 ├── remote-privilege-state-drift.md     # Resolved: Expandable privilege issue
 └── [future-issue].md                   # Future issue documentation
@@ -225,9 +225,9 @@ docs/issues/
 
 ## Related Documentation
 
-- **Testing Guide**: [docs/TESTING.md](../TESTING.md)
-- **Setup Guide**: [docs/guides/SETUP.md](../guides/SETUP.md)
-- **Revoke Fix**: [docs/guides/REVOKE_FIX.md](../guides/REVOKE_FIX.md)
+- **Testing Guide**: [internal-docs/TESTING.md](../TESTING.md)
+- **Setup Guide**: [docs/guides/setup.md](../../docs/guides/setup.md)
+- **Revoke Fix**: [docs/guides/revoke-fix.md](../../docs/guides/revoke-fix.md)
 - **Architecture**: [CLAUDE.md](../../CLAUDE.md)
 - **Main README**: [README.md](../../README.md)
 

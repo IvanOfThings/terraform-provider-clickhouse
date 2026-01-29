@@ -37,3 +37,4 @@ website/vendor
 **/.terraform.lock.hcl
 
 /examples/resources/schema_migrations/**
+plans/fix-docs-structure-for-registry.md
