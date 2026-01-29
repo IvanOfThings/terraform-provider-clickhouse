@@ -1,0 +1,27 @@
+internal-docs/issues/remote-privilege-state-drift.md
+  1d9b7c0c3b4419ca 342-344
+internal-docs/TESTING.md
+  1d9b7c0c3b4419ca 44
+internal-docs/issues/README.md
+  1d9b7c0c3b4419ca 53-54,142,203,220,228-230
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.40",
+  "base_commit_sha": "e81e0c919798f7d9a163313daa7062aef4755a76",
+  "prompts": {
+    "1d9b7c0c3b4419ca": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dce97f41-2ca7-42e0-92a4-802d2bea5402",
+        "model": "claude-sonnet-4-5-20250929"
+      },
+      "human_author": "Ivan Perea <ivan.perea@lansweeper.com>",
+      "messages": [],
+      "total_additions": 21,
+      "total_deletions": 21,
+      "accepted_lines": 21,
+      "overriden_lines": 0
+    }
+  }
+}
