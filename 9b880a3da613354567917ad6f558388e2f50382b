@@ -1,0 +1,21 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.40",
+  "base_commit_sha": "9b880a3da613354567917ad6f558388e2f50382b",
+  "prompts": {
+    "1d9b7c0c3b4419ca": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dce97f41-2ca7-42e0-92a4-802d2bea5402",
+        "model": "claude-sonnet-4-5-20250929"
+      },
+      "human_author": "Ivan Perea <ivan.perea@lansweeper.com>",
+      "messages": [],
+      "total_additions": 7,
+      "total_deletions": 0,
+      "accepted_lines": 7,
+      "overriden_lines": 0
+    }
+  }
+}
