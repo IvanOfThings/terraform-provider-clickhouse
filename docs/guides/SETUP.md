@@ -1,3 +1,10 @@
+---
+page_title: "ClickHouse Setup Guide"
+subcategory: "Getting Started"
+description: |-
+  Guide for setting up ClickHouse with the Terraform Provider, from simple standalone instances to clustered deployments.
+---
+
 # ClickHouse Setup Guide
 
 This guide covers setting up ClickHouse for use with the Terraform Provider, from simple standalone instances to clustered deployments.
