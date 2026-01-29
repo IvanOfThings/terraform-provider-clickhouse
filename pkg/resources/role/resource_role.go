@@ -87,6 +87,14 @@ func resourceRoleRead(ctx context.Context, d *schema.ResourceData, meta any) dia
 	if err := d.Set("name", roleResource.Name); err != nil {
 		return diag.FromErr(fmt.Errorf("resource role read: %v", err))
 	}
+
+	// When role has no privileges, ClickHouse doesn't store database info
+	// Preserve database from state instead of clearing it
+	if roleResource.Database == "" && len(roleResource.Privileges.List()) == 0 {
+		// Keep existing database from state
+		roleResource.Database = d.Get("database").(string)
+	}
+
 	if err := d.Set("database", roleResource.Database); err != nil {
 		return diag.FromErr(fmt.Errorf("resource role read: %v", err))
 	}
