@@ -1,0 +1,27 @@
+pkg/resources/role/service.go
+  1d9b7c0c3b4419ca 99-105
+pkg/resources/role/service_test.go
+  1d9b7c0c3b4419ca 93-114
+plans/handle-revoke-statements-in-show-grants.md
+  1d9b7c0c3b4419ca 1-410
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.40",
+  "base_commit_sha": "91175c822cdafc806c6a7c0057f03eaca93fbd9b",
+  "prompts": {
+    "1d9b7c0c3b4419ca": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dce97f41-2ca7-42e0-92a4-802d2bea5402",
+        "model": "claude-sonnet-4-5-20250929"
+      },
+      "human_author": "Ivan Perea <ivan.perea@lansweeper.com>",
+      "messages": [],
+      "total_additions": 439,
+      "total_deletions": 0,
+      "accepted_lines": 439,
+      "overriden_lines": 0
+    }
+  }
+}
