@@ -90,6 +90,28 @@ func TestParseGrantStatement(t *testing.T) {
 			expectError:   true,
 			errorContains: "table-level grants are not supported",
 		},
+		// REVOKE statement test cases - these should fail with "missing GRANT"
+		{
+			name:          "REVOKE statement - database level",
+			statement:     "REVOKE SELECT ON system.system_tables FROM test_role",
+			roleName:      "test_role",
+			expectError:   true,
+			errorContains: "missing GRANT",
+		},
+		{
+			name:          "REVOKE statement - table level",
+			statement:     "REVOKE SELECT ON system.system_tables_tracking_auburn_qf_97 FROM system_read",
+			roleName:      "system_read",
+			expectError:   true,
+			errorContains: "missing GRANT",
+		},
+		{
+			name:          "REVOKE statement - global",
+			statement:     "REVOKE REMOTE ON *.* FROM test_role",
+			roleName:      "test_role",
+			expectError:   true,
+			errorContains: "missing GRANT",
+		},
 	}
 
 	for _, tt := range tests {
