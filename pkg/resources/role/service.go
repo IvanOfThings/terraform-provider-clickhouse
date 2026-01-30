@@ -96,6 +96,13 @@ func (rs *CHRoleService) getRoleGrants(ctx context.Context, roleName string) ([]
 			return nil, fmt.Errorf("error scanning grant statement: %w", err)
 		}
 
+		// Skip REVOKE statements - provider only manages GRANT privileges
+		// REVOKE statements appear in SHOW GRANTS output when partial revokes are used in ClickHouse
+		// (e.g., GRANT SELECT ON system.* followed by REVOKE SELECT ON system.specific_table)
+		if strings.HasPrefix(strings.ToUpper(strings.TrimSpace(grantStatement)), "REVOKE ") {
+			continue
+		}
+
 		// Parse SHOW GRANTS output
 		// Example: "GRANT REMOTE ON *.* TO role_name"
 		// Example: "GRANT SELECT, INSERT ON database.* TO role_name"
