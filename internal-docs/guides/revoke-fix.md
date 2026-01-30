@@ -1,3 +1,10 @@
+---
+page_title: "Privilege Revoke Fix"
+subcategory: "Troubleshooting"
+description: |-
+  Documentation for the expandable privilege state drift fix in the ClickHouse Terraform Provider, including background, solution, and verification steps.
+---
+
 # REVOKE Fix Documentation
 
 ## Overview
@@ -228,8 +235,8 @@ terraform apply
 - `pkg/resources/role/service_test.go` - Unit tests for parsing logic
 
 ### Documentation
-- `docs/TESTING.md` - Comprehensive testing guide
-- `docs/guides/SETUP.md` - Setup instructions
+- `internal-docs/TESTING.md` - Comprehensive testing guide
+- `docs/guides/setup.md` - Setup instructions
 - `CLAUDE.md` - Architecture and privilege system details
 
 ## Best Practices
@@ -315,4 +322,4 @@ terraform apply
 
 ## Related Issues
 
-See `docs/issues/remote-privilege-state-drift.md` for the original issue that prompted this fix.
+See `internal-docs/issues/remote-privilege-state-drift.md` for the original issue that prompted this fix.
