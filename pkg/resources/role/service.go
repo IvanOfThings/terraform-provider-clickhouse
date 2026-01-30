@@ -12,6 +12,36 @@ type CHRoleService struct {
 	CHConnection *driver.Conn
 }
 
+func getRevokeQuery(roleName string, privileges []string, database string) string {
+	// Separate global privileges from database-level privileges
+	var globalPrivileges []string
+	var dbPrivileges []string
+
+	for _, privilege := range privileges {
+		if IsGlobalPrivilege(privilege) {
+			globalPrivileges = append(globalPrivileges, privilege)
+		} else {
+			dbPrivileges = append(dbPrivileges, privilege)
+		}
+	}
+
+	var queries []string
+
+	// Revoke global privileges with ON *.* syntax
+	if len(globalPrivileges) > 0 {
+		queries = append(queries, fmt.Sprintf("REVOKE %s ON *.* FROM %s",
+			strings.Join(globalPrivileges, ","), roleName))
+	}
+
+	// Revoke database-level privileges with appropriate syntax
+	if len(dbPrivileges) > 0 {
+		queries = append(queries, fmt.Sprintf("REVOKE %s ON %s.* FROM %s",
+			strings.Join(dbPrivileges, ","), database, roleName))
+	}
+
+	return strings.Join(queries, "; ")
+}
+
 func getGrantQuery(roleName string, privileges []string, database string) string {
 	// Separate global privileges from database-level privileges
 	var globalPrivileges []string
@@ -260,7 +290,7 @@ func (rs *CHRoleService) UpdateRole(ctx context.Context, rolePlan RoleResource, 
 	}
 
 	if len(revokePrivileges) > 0 {
-		err := conn.Exec(ctx, fmt.Sprintf("REVOKE %s ON %s.* FROM %s", strings.Join(revokePrivileges, ","), rolePlan.Database, rolePlan.Name))
+		err := conn.Exec(ctx, getRevokeQuery(rolePlan.Name, revokePrivileges, rolePlan.Database))
 		if err != nil {
 			return nil, fmt.Errorf("error revoking privileges from role %s: %v", chRole.Name, err)
 		}
