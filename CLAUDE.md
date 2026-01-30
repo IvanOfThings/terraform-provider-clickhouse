@@ -312,3 +312,7 @@ if err != nil {
 1. **Roles**: Currently support only ONE database per role (see skipped test `TestAccResourceRole_ChangeDatabaseAndPrivileges`)
 2. **Table Engines**: Limited replicated table engine support (documented in README)
 3. **Expandable Privileges**: Provider must use `SHOW GRANTS` not `system.grants` to avoid privilege expansion issues
+4. **Partial Revokes Not Tracked**: The provider skips REVOKE statements in `SHOW GRANTS` output. When ClickHouse has partial revokes (broad grant + specific revoke), only the GRANT portion is tracked in Terraform state.
+   - **Impact**: If partial revokes are applied outside Terraform, the provider will not detect or manage them
+   - **Workaround**: Use complete privilege sets per database scope rather than partial revokes
+   - **Context**: See `plans/handle-revoke-statements-in-show-grants.md` for details
