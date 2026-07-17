@@ -23,6 +23,7 @@ var AllowedDbLevelPrivileges = []string{
 	"SHOW TABLES",
 	"dictGet",
 	"TRUNCATE",
+	"OPTIMIZE",
 }
 
 // SOURCE privileges that expand into READ + WRITE (v25.7+)
