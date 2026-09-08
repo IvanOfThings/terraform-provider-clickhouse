@@ -20,6 +20,7 @@ func (us *CHUserService) GetUser(ctx context.Context, userName string) (*CHUser,
 	if err != nil {
 		return nil, fmt.Errorf("error fetching user: %s", err)
 	}
+	defer rows.Close()
 	if rows.Next() == false {
 		return nil, nil
 	}
