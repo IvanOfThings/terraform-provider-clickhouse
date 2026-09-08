@@ -212,6 +212,7 @@ func (rs *CHRoleService) GetRole(ctx context.Context, roleName string) (*CHRole,
 	if err != nil {
 		return nil, fmt.Errorf("error fetching role: %s", err)
 	}
+	defer rows.Close()
 	if rows.Next() == false {
 		return nil, nil
 	}
